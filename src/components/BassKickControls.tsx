@@ -87,7 +87,7 @@ export function BassKickControls({
       </div>
 
       <ADSRControls
-        label="Amplitude Envelope"
+        label="ADSR"
         initialSettings={settings.envelope}
         ranges={{
           attack: [0.001, 0.1],

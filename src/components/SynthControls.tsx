@@ -77,7 +77,7 @@ export function SynthControls({
       </div>
 
       <ADSRControls
-        label="Amplitude Envelope"
+        label="ADSR"
         initialSettings={settings.envelope}
         onSettingsChange={handleADSRChange}
       />

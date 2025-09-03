@@ -1,8 +1,7 @@
-import { Stack, Text, Group, ActionIcon } from '@mantine/core'
+import { Stack, Text, Group, Button } from '@mantine/core'
 import { useADSR } from '../hooks/useADSR'
 import { GraphicalADSR } from './GraphicalADSR'
 import type { UseADSROptions, ADSRSettings } from '../hooks/useADSR'
-import { IconRefresh } from '@tabler/icons-react'
 
 interface ADSRControlsProps extends UseADSROptions {
   onSettingsChange?: (settings: ADSRSettings) => void
@@ -11,7 +10,7 @@ interface ADSRControlsProps extends UseADSROptions {
 
 export function ADSRControls({ 
   onSettingsChange, 
-  label = "ADSR Envelope",
+  label = "",
   initialSettings,
   ...adsrOptions 
 }: ADSRControlsProps) {
@@ -23,30 +22,30 @@ export function ADSRControls({
     onSettingsChange?.(newSettings)
   }
 
+  const resetToDefaults = () => {
+    handleGraphicalChange({
+      attack: 0.01,
+      decay: 0.3,
+      sustain: 0.3,
+      release: 1.0,
+      attackCurve: 'exponential',
+      decayCurve: 'exponential',
+      releaseCurve: 'exponential'
+    })
+  }
+
   return (
     <Stack gap="sm">
-      {/* Simple Header */}
-      <Group justify="space-between" align="center">
-        <Text size="md" fw={500}>
-          {label}
-        </Text>
-        <ActionIcon 
-          variant="subtle" 
-          size="sm"
-          onClick={() => handleGraphicalChange({
-            attack: 0.01,
-            decay: 0.3,
-            sustain: 0.3,
-            release: 1.0,
-            attackCurve: 'exponential',
-            decayCurve: 'exponential',
-            releaseCurve: 'exponential'
-          })}
-          aria-label="Reset to defaults"
-        >
-          <IconRefresh size={16} />
-        </ActionIcon>
-      </Group>
+      {label && (
+        <Group justify="space-between" align="center">
+          <Text size="md" fw={500}>
+            {label}
+          </Text>
+          <Button size="xs" variant="light" onClick={resetToDefaults}>
+            Reset
+          </Button>
+        </Group>
+      )}
 
       {/* Always Visual ADSR */}
       <GraphicalADSR

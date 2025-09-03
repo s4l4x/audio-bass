@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { Box, Text, Group, Button } from '@mantine/core'
+import { Box, Text, Group } from '@mantine/core'
 import type { ADSRSettings, CurveType } from '../hooks/useADSR'
 
 interface GraphicalADSRProps {
@@ -164,26 +164,8 @@ export function GraphicalADSR({
     })
   }, [])
 
-  const resetToDefaults = () => {
-    onSettingsChange({
-      attack: 0.01,
-      decay: 0.3,
-      sustain: 0.3,
-      release: 1.0,
-      attackCurve: 'exponential',
-      decayCurve: 'exponential',
-      releaseCurve: 'exponential'
-    })
-  }
-
   return (
     <Box style={{ userSelect: 'none' }}>
-      <Group justify="space-between" align="center" mb="sm">
-        <Text size="md" fw={500}>ADSR Envelope</Text>
-        <Button size="xs" variant="light" onClick={resetToDefaults}>
-          Reset
-        </Button>
-      </Group>
       
       <Box
         style={{ 
