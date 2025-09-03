@@ -1,12 +1,14 @@
 import { Menu, ActionIcon, Modal, Text, Code } from '@mantine/core'
-import { IconDots, IconBug, IconTestPipe } from '@tabler/icons-react'
+import { IconDots, IconBug, IconTestPipe, IconPalette } from '@tabler/icons-react'
 import { useDisclosure } from '@mantine/hooks'
 import { useState } from 'react'
 import * as Tone from 'tone'
+import { AppearanceControls } from './AppearanceControls'
 
 export function DebugMenu() {
   const [debugInfo, setDebugInfo] = useState<string>('')
   const [debugModalOpened, { open: openDebugModal, close: closeDebugModal }] = useDisclosure(false)
+  const [appearanceModalOpened, { open: openAppearanceModal, close: closeAppearanceModal }] = useDisclosure(false)
   const [isTestPlaying, setIsTestPlaying] = useState(false)
   const [audioStatus, setAudioStatus] = useState<string>('')
 
@@ -90,6 +92,10 @@ export function DebugMenu() {
 
   return (
     <>
+      <Modal opened={appearanceModalOpened} onClose={closeAppearanceModal} title="Appearance">
+        <AppearanceControls />
+      </Modal>
+
       <Menu shadow="md" width={200}>
         <Menu.Target>
           <ActionIcon variant="subtle" size="lg" color="gray">
@@ -98,6 +104,16 @@ export function DebugMenu() {
         </Menu.Target>
 
         <Menu.Dropdown>
+          <Menu.Label>Appearance</Menu.Label>
+          <Menu.Item
+            leftSection={<IconPalette size={16} />}
+            onClick={openAppearanceModal}
+          >
+            Theme
+          </Menu.Item>
+
+          <Menu.Divider />
+
           <Menu.Label>Debug Tools</Menu.Label>
           <Menu.Item 
             leftSection={<IconBug size={16} />}
