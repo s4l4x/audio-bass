@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { Box, Text, Group } from '@mantine/core'
+import { Box, Text, Group, useMantineTheme } from '@mantine/core'
 import type { ADSRSettings, CurveType } from '../hooks/useADSR'
 
 interface GraphicalADSRProps {
@@ -22,6 +22,8 @@ export function GraphicalADSR({
   width = 400,
   height = 200 
 }: GraphicalADSRProps) {
+  const theme = useMantineTheme();
+  const colors = theme.other.adsrColors;
   const svgRef = useRef<SVGSVGElement>(null)
   const [dragState, setDragState] = useState<{
     isDragging: boolean
@@ -34,7 +36,7 @@ export function GraphicalADSR({
   })
 
   // Convert ADSR values to SVG coordinates
-  const padding = 20
+  const padding = 25
   const graphWidth = width - padding * 2
   const graphHeight = height - padding * 2
 
@@ -166,7 +168,6 @@ export function GraphicalADSR({
 
   return (
     <Box style={{ userSelect: 'none' }}>
-      
       <Box
         style={{ 
           border: '1px solid var(--mantine-color-gray-3)',
@@ -230,7 +231,7 @@ export function GraphicalADSR({
           <path
             d={generateCurvePath(padding, bottomY, attackX, topY, 'exponential')}
             fill="none"
-            stroke="#51cf66"
+            stroke={colors.attack}
             strokeWidth="3"
             strokeLinejoin="round"
             pointerEvents="none"
@@ -240,7 +241,7 @@ export function GraphicalADSR({
           <path
             d={generateCurvePath(attackX, topY, decayX, sustainY, 'exponential')}
             fill="none"
-            stroke="#339af0"
+            stroke={colors.decay}
             strokeWidth="3"
             strokeLinejoin="round"
             pointerEvents="none"
@@ -250,7 +251,7 @@ export function GraphicalADSR({
           <path
             d={`M ${decayX} ${sustainY} L ${sustainX} ${sustainY}`}
             fill="none"
-            stroke="#ffd43b"
+            stroke={colors.sustain}
             strokeWidth="3"
             strokeLinejoin="round"
             pointerEvents="none"
@@ -260,7 +261,7 @@ export function GraphicalADSR({
           <path
             d={generateCurvePath(sustainX, sustainY, releaseX, bottomY, 'exponential')}
             fill="none"
-            stroke="#ff6b6b"
+            stroke={colors.release}
             strokeWidth="3"
             strokeLinejoin="round"
             pointerEvents="none"
@@ -268,13 +269,6 @@ export function GraphicalADSR({
           
           {/* Control points with color coding and directional cursors */}
           {controlPoints.map((point) => {
-            const colors = {
-              attack: '#51cf66',
-              decay: '#339af0', 
-              sustain: '#ffd43b',
-              release: '#ff6b6b'
-            }
-            
             const cursors = {
               attack: 'ew-resize',      // horizontal resize for time
               decay: 'ew-resize',       // horizontal resize for time
@@ -323,16 +317,16 @@ export function GraphicalADSR({
       
       {/* Current values display with color coding */}
       <Group gap="lg" mt="xs">
-        <Text size="xs" style={{ color: '#51cf66' }}>
+        <Text size="xs" style={{ color: colors.attack }}>
           A: {settings.attack.toFixed(3)}s
         </Text>
-        <Text size="xs" style={{ color: '#339af0' }}>
+        <Text size="xs" style={{ color: colors.decay }}>
           D: {settings.decay.toFixed(3)}s
         </Text>
-        <Text size="xs" style={{ color: '#ffd43b' }}>
+        <Text size="xs" style={{ color: colors.sustain }}>
           S: {settings.sustain.toFixed(2)}
         </Text>
-        <Text size="xs" style={{ color: '#ff6b6b' }}>
+        <Text size="xs" style={{ color: colors.release }}>
           R: {settings.release.toFixed(3)}s
         </Text>
       </Group>
