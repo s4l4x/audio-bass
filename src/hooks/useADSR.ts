@@ -1,10 +1,15 @@
 import { useState } from 'react'
 
+export type CurveType = 'linear' | 'exponential' | 'sine' | 'cosine'
+
 export interface ADSRSettings {
   attack: number
   decay: number
   sustain: number
   release: number
+  attackCurve: CurveType
+  decayCurve: CurveType
+  releaseCurve: CurveType
 }
 
 export interface UseADSROptions {
@@ -21,7 +26,10 @@ const DEFAULT_SETTINGS: ADSRSettings = {
   attack: 0.01,
   decay: 0.3,
   sustain: 0.3,
-  release: 1.0
+  release: 1.0,
+  attackCurve: 'exponential',
+  decayCurve: 'exponential', 
+  releaseCurve: 'exponential'
 }
 
 const DEFAULT_RANGES = {
@@ -44,7 +52,7 @@ export function useADSR(options: UseADSROptions = {}) {
     ...ranges
   }
 
-  const updateSetting = (key: keyof ADSRSettings, value: number) => {
+  const updateSetting = (key: keyof ADSRSettings, value: number | CurveType) => {
     setSettings(prev => ({
       ...prev,
       [key]: value

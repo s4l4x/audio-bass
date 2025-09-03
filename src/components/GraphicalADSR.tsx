@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import { Box, Text, Group, Button } from '@mantine/core'
-import type { ADSRSettings } from '../hooks/useADSR'
+import type { ADSRSettings, CurveType } from '../hooks/useADSR'
 
 interface GraphicalADSRProps {
   settings: ADSRSettings
@@ -57,20 +57,46 @@ export function GraphicalADSR({
     { id: 'release', x: releaseX, y: bottomY, isDragging: false }
   ]
 
-  // Generate the path for the ADSR curve
-  const generatePath = () => {
-    return `
-      M ${padding} ${bottomY}
-      L ${attackX} ${topY}
-      L ${decayX} ${sustainY}
-      L ${sustainX} ${sustainY}
-      L ${releaseX} ${bottomY}
-    `
+  // Generate curved paths for each ADSR segment
+  const generateCurvePath = (startX: number, startY: number, endX: number, endY: number, curveType: CurveType, steps = 20) => {
+    const pathPoints: string[] = []
+    
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps
+      let x = startX + (endX - startX) * t
+      let y: number
+      
+      switch (curveType) {
+        case 'exponential':
+          // All exponential curves: slow start, fast end - use 1-(1-t)^2
+          const expCurve = 1 - Math.pow(1 - t, 2)
+          y = startY + (endY - startY) * expCurve
+          break
+        case 'sine':
+          const sineCurve = Math.sin(t * Math.PI * 0.5)
+          y = startY + (endY - startY) * sineCurve
+          break
+        case 'cosine':
+          const cosineCurve = 1 - Math.cos(t * Math.PI * 0.5)
+          y = startY + (endY - startY) * cosineCurve
+          break
+        case 'linear':
+        default:
+          y = startY + (endY - startY) * t
+          break
+      }
+      
+      pathPoints.push(i === 0 ? `M ${x} ${y}` : `L ${x} ${y}`)
+    }
+    
+    return pathPoints.join(' ')
   }
+
 
   // Handle mouse events
   const handleMouseDown = useCallback((event: React.MouseEvent, pointId: string) => {
     event.preventDefault()
+    event.stopPropagation()
     const rect = svgRef.current?.getBoundingClientRect()
     if (!rect) return
 
@@ -143,7 +169,10 @@ export function GraphicalADSR({
       attack: 0.01,
       decay: 0.3,
       sustain: 0.3,
-      release: 1.0
+      release: 1.0,
+      attackCurve: 'exponential',
+      decayCurve: 'exponential',
+      releaseCurve: 'exponential'
     })
   }
 
@@ -214,41 +243,45 @@ export function GraphicalADSR({
             </>
           )}
           
-          {/* ADSR curve segments with different colors */}
-          {/* Attack segment */}
+          {/* ADSR curve segments - visual paths first */}
+          {/* Attack segment - exponential curve */}
           <path
-            d={`M ${padding} ${bottomY} L ${attackX} ${topY}`}
+            d={generateCurvePath(padding, bottomY, attackX, topY, 'exponential')}
             fill="none"
             stroke="#51cf66"
             strokeWidth="3"
             strokeLinejoin="round"
+            pointerEvents="none"
           />
           
-          {/* Decay segment */}
+          {/* Decay segment - exponential curve */}
           <path
-            d={`M ${attackX} ${topY} L ${decayX} ${sustainY}`}
+            d={generateCurvePath(attackX, topY, decayX, sustainY, 'exponential')}
             fill="none"
             stroke="#339af0"
             strokeWidth="3"
             strokeLinejoin="round"
+            pointerEvents="none"
           />
           
-          {/* Sustain segment */}
+          {/* Sustain segment (always linear) */}
           <path
             d={`M ${decayX} ${sustainY} L ${sustainX} ${sustainY}`}
             fill="none"
             stroke="#ffd43b"
             strokeWidth="3"
             strokeLinejoin="round"
+            pointerEvents="none"
           />
           
-          {/* Release segment */}
+          {/* Release segment - exponential curve */}
           <path
-            d={`M ${sustainX} ${sustainY} L ${releaseX} ${bottomY}`}
+            d={generateCurvePath(sustainX, sustainY, releaseX, bottomY, 'exponential')}
             fill="none"
             stroke="#ff6b6b"
             strokeWidth="3"
             strokeLinejoin="round"
+            pointerEvents="none"
           />
           
           {/* Control points with color coding and directional cursors */}
@@ -297,6 +330,7 @@ export function GraphicalADSR({
             )
           })}
           
+          
           {/* Labels */}
           <text x={padding} y={height - 5} fontSize="10" fill="#868e96">0</text>
           <text x={width - padding} y={height - 5} fontSize="10" fill="#868e96">Time</text>
@@ -307,11 +341,24 @@ export function GraphicalADSR({
       
       {/* Current values display with color coding */}
       <Group gap="lg" mt="xs">
-        <Text size="xs" style={{ color: '#51cf66' }}>A: {settings.attack.toFixed(3)}s</Text>
-        <Text size="xs" style={{ color: '#339af0' }}>D: {settings.decay.toFixed(3)}s</Text>
-        <Text size="xs" style={{ color: '#ffd43b' }}>S: {settings.sustain.toFixed(2)}</Text>
-        <Text size="xs" style={{ color: '#ff6b6b' }}>R: {settings.release.toFixed(3)}s</Text>
+        <Text size="xs" style={{ color: '#51cf66' }}>
+          A: {settings.attack.toFixed(3)}s
+        </Text>
+        <Text size="xs" style={{ color: '#339af0' }}>
+          D: {settings.decay.toFixed(3)}s
+        </Text>
+        <Text size="xs" style={{ color: '#ffd43b' }}>
+          S: {settings.sustain.toFixed(2)}
+        </Text>
+        <Text size="xs" style={{ color: '#ff6b6b' }}>
+          R: {settings.release.toFixed(3)}s
+        </Text>
       </Group>
+      
+      {/* Interaction hint */}
+      <Text size="xs" c="dimmed" ta="center" mt="xs">
+        Drag points to adjust timing/level
+      </Text>
     </Box>
   )
 }

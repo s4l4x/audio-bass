@@ -48,7 +48,10 @@ const getDefaultSettings = (type: InstrumentType): InstrumentSettings => {
       return {
         ...baseSettings,
         frequency: 440,
-        envelope: { attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0 },
+        envelope: { 
+          attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0,
+          attackCurve: 'exponential', decayCurve: 'exponential', releaseCurve: 'exponential'
+        },
         oscillatorType: 'sine'
       } as SynthSettings
 
@@ -57,7 +60,10 @@ const getDefaultSettings = (type: InstrumentType): InstrumentSettings => {
         ...baseSettings,
         pitchDecay: 0.05,
         octaves: 10,
-        envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 },
+        envelope: { 
+          attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4,
+          attackCurve: 'exponential', decayCurve: 'exponential', releaseCurve: 'exponential'
+        },
         oscillatorType: 'sine'
       } as MembraneSynthSettings
 
@@ -66,7 +72,10 @@ const getDefaultSettings = (type: InstrumentType): InstrumentSettings => {
       return {
         ...baseSettings,
         frequency: 440,
-        envelope: { attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0 },
+        envelope: { 
+          attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0,
+          attackCurve: 'exponential', decayCurve: 'exponential', releaseCurve: 'exponential'
+        },
         oscillatorType: 'sine'
       } as SynthSettings
 
@@ -74,7 +83,10 @@ const getDefaultSettings = (type: InstrumentType): InstrumentSettings => {
       return {
         ...baseSettings,
         frequency: 440,
-        envelope: { attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0 },
+        envelope: { 
+          attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0,
+          attackCurve: 'exponential', decayCurve: 'exponential', releaseCurve: 'exponential'
+        },
         oscillatorType: 'sine'
       } as SynthSettings
   }
@@ -93,7 +105,13 @@ const applySettingsToInstrument = (instrument: Tone.Synth | Tone.MembraneSynth |
     }
     
     if ('envelope' in synth) {
-      Object.assign(synth.envelope, synthSettings.envelope)
+      synth.envelope.attack = synthSettings.envelope.attack
+      synth.envelope.decay = synthSettings.envelope.decay
+      synth.envelope.sustain = synthSettings.envelope.sustain
+      synth.envelope.release = synthSettings.envelope.release
+      synth.envelope.attackCurve = synthSettings.envelope.attackCurve
+      synth.envelope.decayCurve = synthSettings.envelope.decayCurve
+      synth.envelope.releaseCurve = synthSettings.envelope.releaseCurve
     }
   }
 
@@ -104,7 +122,13 @@ const applySettingsToInstrument = (instrument: Tone.Synth | Tone.MembraneSynth |
     membraneSynth.pitchDecay = membraneSettings.pitchDecay
     membraneSynth.octaves = membraneSettings.octaves
     membraneSynth.oscillator.type = membraneSettings.oscillatorType
-    Object.assign(membraneSynth.envelope, membraneSettings.envelope)
+    membraneSynth.envelope.attack = membraneSettings.envelope.attack
+    membraneSynth.envelope.decay = membraneSettings.envelope.decay
+    membraneSynth.envelope.sustain = membraneSettings.envelope.sustain
+    membraneSynth.envelope.release = membraneSettings.envelope.release
+    membraneSynth.envelope.attackCurve = membraneSettings.envelope.attackCurve
+    membraneSynth.envelope.decayCurve = membraneSettings.envelope.decayCurve
+    membraneSynth.envelope.releaseCurve = membraneSettings.envelope.releaseCurve
   }
 }
 
