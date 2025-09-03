@@ -1,51 +1,78 @@
-import { Container, Title, Button, Stack, Slider, Text, Center } from '@mantine/core'
-import { useSynth } from './hooks/useSynth'
+import { Container, Title, Center, Select, Divider, Group } from '@mantine/core'
+import { useInstrument } from './hooks/useInstrument'
+import { SynthControls } from './components/SynthControls'
+import { BassKickControls } from './components/BassKickControls'
+import { AudioTestButton } from './components/AudioTestButton'
+import type { InstrumentType, SynthSettings, MembraneSynthSettings } from './types/instruments'
 
 function App() {
-  const { isPlaying, settings, togglePlay, updateSettings } = useSynth()
+  const { 
+    config, 
+    isPlaying, 
+    changeInstrumentType, 
+    updateSettings, 
+    triggerAttack, 
+    triggerRelease, 
+    triggerAttackRelease 
+  } = useInstrument('synth')
+
+  const instrumentOptions = [
+    { value: 'synth', label: '🎹 Synthesizer' },
+    { value: 'membraneSynth', label: '🥁 Bass Kick' },
+    { value: 'amSynth', label: '📻 AM Synth' },
+    { value: 'fmSynth', label: '🎛️ FM Synth' }
+  ]
+
+  const renderInstrumentControls = () => {
+    switch (config.type) {
+      case 'synth':
+      case 'amSynth':
+      case 'fmSynth':
+        return (
+          <SynthControls
+            settings={config.settings as SynthSettings}
+            isPlaying={isPlaying}
+            onSettingsChange={updateSettings}
+            onPlay={triggerAttack}
+            onStop={triggerRelease}
+          />
+        )
+      
+      case 'membraneSynth':
+        return (
+          <BassKickControls
+            settings={config.settings as MembraneSynthSettings}
+            onSettingsChange={updateSettings}
+            onTrigger={() => triggerAttackRelease()}
+          />
+        )
+      
+      default:
+        return null
+    }
+  }
 
   return (
     <Center style={{ minHeight: '100vh' }}>
       <Container size="sm">
         <Title order={1} ta="center" mb="xl">
-          Audio Bass - Tone.js Demo
+          Audio Bass - Multi-Instrument Studio
         </Title>
         
-        <Stack gap="lg">
-          <Button 
-            size="lg" 
-            onClick={togglePlay}
-            variant={isPlaying ? "filled" : "outline"}
-          >
-            {isPlaying ? 'Stop' : 'Play'} Tone
-          </Button>
+        <Group justify="space-between" align="flex-end" mb="xl">
+          <Select
+            label="Choose Instrument"
+            value={config.type}
+            onChange={(value) => changeInstrumentType(value as InstrumentType)}
+            data={instrumentOptions}
+            style={{ flex: 1 }}
+          />
+          <AudioTestButton />
+        </Group>
 
-          <div>
-            <Text size="sm" mb="xs">
-              Frequency: {settings.frequency} Hz
-            </Text>
-            <Slider
-              value={settings.frequency}
-              onChange={(value) => updateSettings({ frequency: value })}
-              min={200}
-              max={800}
-              step={1}
-            />
-          </div>
+        <Divider mb="lg" />
 
-          <div>
-            <Text size="sm" mb="xs">
-              Volume: {settings.volume} dB
-            </Text>
-            <Slider
-              value={settings.volume}
-              onChange={(value) => updateSettings({ volume: value })}
-              min={-40}
-              max={0}
-              step={1}
-            />
-          </div>
-        </Stack>
+        {renderInstrumentControls()}
       </Container>
     </Center>
   )
