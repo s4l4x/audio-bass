@@ -1,5 +1,7 @@
-import { Stack, Text, Slider, Group, Button } from '@mantine/core'
+import { Stack, Text, Slider, Group, Button, Switch } from '@mantine/core'
+import { useState } from 'react'
 import { useADSR } from '../hooks/useADSR'
+import { GraphicalADSR } from './GraphicalADSR'
 import type { UseADSROptions, ADSRSettings } from '../hooks/useADSR'
 
 interface ADSRControlsProps extends UseADSROptions {
@@ -13,11 +15,45 @@ export function ADSRControls({
   ...adsrOptions 
 }: ADSRControlsProps) {
   const { settings, ranges, updateSetting, resetToDefaults } = useADSR(adsrOptions)
+  const [useGraphicalMode, setUseGraphicalMode] = useState(true)
 
   const handleSettingChange = (key: keyof ADSRSettings, value: number) => {
     updateSetting(key, value)
     const newSettings = { ...settings, [key]: value }
     onSettingsChange?.(newSettings)
+  }
+
+  const handleGraphicalChange = (newSettings: ADSRSettings) => {
+    // Update all settings at once from the graphical component
+    Object.keys(newSettings).forEach(key => {
+      updateSetting(key as keyof ADSRSettings, newSettings[key as keyof ADSRSettings])
+    })
+    onSettingsChange?.(newSettings)
+  }
+
+  if (useGraphicalMode) {
+    return (
+      <Stack gap="sm">
+        <Group justify="space-between" align="center">
+          <Text size="md" fw={500}>
+            {label}
+          </Text>
+          <Group gap="xs">
+            <Switch
+              checked={useGraphicalMode}
+              onChange={(event) => setUseGraphicalMode(event.currentTarget.checked)}
+              label="Visual"
+              size="sm"
+            />
+          </Group>
+        </Group>
+
+        <GraphicalADSR
+          settings={settings}
+          onSettingsChange={handleGraphicalChange}
+        />
+      </Stack>
+    )
   }
 
   return (
@@ -26,13 +62,21 @@ export function ADSRControls({
         <Text size="md" fw={500}>
           {label}
         </Text>
-        <Button 
-          size="xs" 
-          variant="light" 
-          onClick={resetToDefaults}
-        >
-          Reset
-        </Button>
+        <Group gap="xs">
+          <Switch
+            checked={useGraphicalMode}
+            onChange={(event) => setUseGraphicalMode(event.currentTarget.checked)}
+            label="Visual"
+            size="sm"
+          />
+          <Button 
+            size="xs" 
+            variant="light" 
+            onClick={resetToDefaults}
+          >
+            Reset
+          </Button>
+        </Group>
       </Group>
 
       <div>
