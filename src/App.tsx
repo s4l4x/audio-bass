@@ -1,8 +1,8 @@
-import { Container, Title, Center, Select, Divider, Group } from '@mantine/core'
+import { Container, Title, Center, Select, Divider, Box } from '@mantine/core'
 import { useInstrument } from './hooks/useInstrument'
 import { SynthControls } from './components/SynthControls'
 import { BassKickControls } from './components/BassKickControls'
-import { AudioTestButton } from './components/AudioTestButton'
+import { DebugMenu } from './components/DebugMenu'
 import type { InstrumentType, SynthSettings, MembraneSynthSettings } from './types/instruments'
 
 function App() {
@@ -53,28 +53,33 @@ function App() {
   }
 
   return (
-    <Center style={{ minHeight: '100vh' }}>
-      <Container size="sm">
-        <Title order={1} ta="center" mb="xl">
-          Audio Bass - Multi-Instrument Studio
-        </Title>
-        
-        <Group justify="space-between" align="flex-end" mb="xl">
+    <Box style={{ minHeight: '100vh', position: 'relative' }}>
+      {/* Debug Menu - Top Right */}
+      <Box style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 100 }}>
+        <DebugMenu />
+      </Box>
+
+      {/* Main Content - Centered */}
+      <Center style={{ minHeight: '100vh' }}>
+        <Container size="sm">
+          <Title order={1} ta="center" mb="xl">
+            Audio Bass - Multi-Instrument Studio
+          </Title>
+          
           <Select
             label="Choose Instrument"
             value={config.type}
             onChange={(value) => changeInstrumentType(value as InstrumentType)}
             data={instrumentOptions}
-            style={{ flex: 1 }}
+            mb="xl"
           />
-          <AudioTestButton />
-        </Group>
 
-        <Divider mb="lg" />
+          <Divider mb="lg" />
 
-        {renderInstrumentControls()}
-      </Container>
-    </Center>
+          {renderInstrumentControls()}
+        </Container>
+      </Center>
+    </Box>
   )
 }
 

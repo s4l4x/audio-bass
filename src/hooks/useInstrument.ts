@@ -9,17 +9,34 @@ import type {
 } from '../types/instruments'
 
 const createInstrument = (type: InstrumentType): Tone.Synth | Tone.MembraneSynth | Tone.AMSynth | Tone.FMSynth => {
-  switch (type) {
-    case 'synth':
-      return new Tone.Synth()
-    case 'membraneSynth':
-      return new Tone.MembraneSynth()
-    case 'amSynth':
-      return new Tone.AMSynth()
-    case 'fmSynth':
-      return new Tone.FMSynth()
-    default:
-      return new Tone.Synth()
+  console.log('🏭 Creating instrument:', type)
+  
+  try {
+    switch (type) {
+      case 'synth':
+        const synth = new Tone.Synth()
+        console.log('✅ Basic synth created successfully')
+        return synth
+      case 'membraneSynth':
+        const membrane = new Tone.MembraneSynth()
+        console.log('✅ Membrane synth created successfully')
+        return membrane
+      case 'amSynth':
+        const am = new Tone.AMSynth()
+        console.log('✅ AM synth created successfully')
+        return am
+      case 'fmSynth':
+        const fm = new Tone.FMSynth()
+        console.log('✅ FM synth created successfully')
+        return fm
+      default:
+        console.log('⚠️ Unknown type, falling back to basic synth')
+        return new Tone.Synth()
+    }
+  } catch (error) {
+    console.error('❌ Failed to create', type, ':', String(error).slice(0, 100))
+    console.log('🔄 Falling back to basic synth')
+    return new Tone.Synth()
   }
 }
 
