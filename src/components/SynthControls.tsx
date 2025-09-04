@@ -1,5 +1,6 @@
 import { Stack, Text, Slider, Select, Button, Group, Title } from '@mantine/core'
 import { ADSRControls } from './ADSRControls'
+import { WaveformVisualization } from './WaveformVisualization'
 import type { SynthSettings } from '../types/instruments'
 import type { ADSRSettings } from '../hooks/useADSR'
 
@@ -9,6 +10,7 @@ interface SynthControlsProps {
   onSettingsChange: (settings: Partial<SynthSettings>) => void
   onPlay: () => void
   onStop: () => void
+  getWaveformData: () => Float32Array | null
 }
 
 export function SynthControls({ 
@@ -16,7 +18,8 @@ export function SynthControls({
   isPlaying, 
   onSettingsChange, 
   onPlay,
-  onStop 
+  onStop,
+  getWaveformData
 }: SynthControlsProps) {
   const handleADSRChange = (envelope: ADSRSettings) => {
     onSettingsChange({ envelope })
@@ -50,6 +53,10 @@ export function SynthControls({
           }} />
         </Button>
       </Group>
+
+      <WaveformVisualization
+        getWaveformData={getWaveformData}
+      />
 
       <div>
         <Text size="xs" mb="4px">

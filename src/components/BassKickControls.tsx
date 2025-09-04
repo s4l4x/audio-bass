@@ -51,6 +51,10 @@ export function BassKickControls({
         </Button>
       </Group>
 
+      <WaveformVisualization
+        getWaveformData={getWaveformData}
+      />
+
       <div>
         <Text size="xs" mb="4px">
           Volume: {settings.volume} dB
@@ -120,10 +124,6 @@ export function BassKickControls({
           release: [0.001, 3.0]
         }}
         onSettingsChange={handleADSRChange}
-      />
-
-      <WaveformVisualization
-        getWaveformData={getWaveformData}
       />
     </Stack>
   )

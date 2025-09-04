@@ -127,28 +127,49 @@ export function useInstrument(initialType: InstrumentType) {
   const lastRecordingRef = useRef<AudioBuffer | null>(null)
   const [waveformDataVersion, setWaveformDataVersion] = useState(0)
 
-  // Simple waveform generation - no React dependencies
-  const generateWaveform = async (settings: MembraneSynthSettings) => {
+  // Generic waveform generation for both instrument types
+  const generateWaveform = async (type: InstrumentType, settings: InstrumentSettings) => {
     try {
       const buffer = await Tone.Offline((context) => {
-        const synth = new Tone.MembraneSynth({
-          pitchDecay: settings.pitchDecay,
-          octaves: settings.octaves,
-          oscillator: { type: settings.oscillatorType },
-          envelope: {
-            attack: settings.envelope.attack,
-            decay: settings.envelope.decay,
-            sustain: settings.envelope.sustain,
-            release: settings.envelope.release,
-            attackCurve: settings.envelope.attackCurve,
-            decayCurve: settings.envelope.decayCurve,
-            releaseCurve: settings.envelope.releaseCurve
-          },
-          volume: settings.volume
-        })
-        
-        synth.connect(context.destination)
-        synth.triggerAttackRelease('C2', '8n')
+        if (type === 'membraneSynth') {
+          const membraneSettings = settings as MembraneSynthSettings
+          const synth = new Tone.MembraneSynth({
+            pitchDecay: membraneSettings.pitchDecay,
+            octaves: membraneSettings.octaves,
+            oscillator: { type: membraneSettings.oscillatorType },
+            envelope: {
+              attack: membraneSettings.envelope.attack,
+              decay: membraneSettings.envelope.decay,
+              sustain: membraneSettings.envelope.sustain,
+              release: membraneSettings.envelope.release,
+              attackCurve: membraneSettings.envelope.attackCurve,
+              decayCurve: membraneSettings.envelope.decayCurve,
+              releaseCurve: membraneSettings.envelope.releaseCurve
+            },
+            volume: membraneSettings.volume
+          })
+          
+          synth.connect(context.destination)
+          synth.triggerAttackRelease('C2', '8n')
+        } else if (type === 'synth') {
+          const synthSettings = settings as SynthSettings
+          const synth = new Tone.Synth({
+            oscillator: { type: synthSettings.oscillatorType },
+            envelope: {
+              attack: synthSettings.envelope.attack,
+              decay: synthSettings.envelope.decay,
+              sustain: synthSettings.envelope.sustain,
+              release: synthSettings.envelope.release,
+              attackCurve: synthSettings.envelope.attackCurve,
+              decayCurve: synthSettings.envelope.decayCurve,
+              releaseCurve: synthSettings.envelope.releaseCurve
+            },
+            volume: synthSettings.volume
+          })
+          
+          synth.connect(context.destination)
+          synth.triggerAttackRelease(synthSettings.frequency, '2n')
+        }
       }, 1.0)
       
       lastRecordingRef.current = buffer
@@ -206,10 +227,10 @@ export function useInstrument(initialType: InstrumentType) {
 
   // Generate initial waveform after instrument is created (separate from initialization)
   useEffect(() => {
-    if (config.type === 'membraneSynth' && instrumentRef.current) {
+    if (instrumentRef.current) {
       // Use a timeout to ensure we're fully initialized
       setTimeout(() => {
-        generateWaveform(config.settings as MembraneSynthSettings)
+        generateWaveform(config.type, config.settings)
       }, 100)
     }
   }, [config.type])
@@ -231,12 +252,10 @@ export function useInstrument(initialType: InstrumentType) {
         settings: { ...prev.settings, ...newSettings }
       }
       
-      // Generate waveform immediately for MembraneSynth
-      if (updatedConfig.type === 'membraneSynth') {
-        setTimeout(() => {
-          generateWaveform(updatedConfig.settings as MembraneSynthSettings)
-        }, 100) // Small delay to let state update
-      }
+      // Generate waveform immediately for both instrument types
+      setTimeout(() => {
+        generateWaveform(updatedConfig.type, updatedConfig.settings)
+      }, 100) // Small delay to let state update
       
       return updatedConfig
     })
@@ -321,7 +340,7 @@ export function useInstrument(initialType: InstrumentType) {
   }, [config.type, config.settings])
 
   const getWaveformData = useCallback((): Float32Array | null => {
-    if (lastRecordingRef.current && config.type === 'membraneSynth') {
+    if (lastRecordingRef.current) {
       // Return the actual audio waveform data from the recording
       const channelData = lastRecordingRef.current.getChannelData(0) // Get mono channel
       // Downsample for visualization (every 100th sample for ~4000 samples -> 40 points)

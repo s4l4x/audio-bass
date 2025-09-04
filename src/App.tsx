@@ -32,6 +32,7 @@ function App() {
             onSettingsChange={updateSettings}
             onPlay={triggerAttack}
             onStop={triggerRelease}
+            getWaveformData={getWaveformData}
           />
         )
       
