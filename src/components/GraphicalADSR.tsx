@@ -262,36 +262,6 @@ export function GraphicalADSR({
           </g>
           
           
-          {/* Drag constraint guides */}
-          {dragState.isDragging && dragState.dragId && (
-            <>
-              {(dragState.dragId === 'attack' || dragState.dragId === 'decay' || dragState.dragId === 'release') && (
-                <line
-                  x1={padding}
-                  y1={controlPoints.find(p => p.id === dragState.dragId)?.y}
-                  x2={width - padding}
-                  y2={controlPoints.find(p => p.id === dragState.dragId)?.y}
-                  stroke={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '3' : '6'})`}
-                  strokeWidth="1"
-                  strokeDasharray="3,3"
-                  opacity="0.5"
-                />
-              )}
-              {dragState.dragId === 'sustain' && (
-                <line
-                  x1={controlPoints.find(p => p.id === 'sustain')?.x}
-                  y1={topPadding}
-                  x2={controlPoints.find(p => p.id === 'sustain')?.x}
-                  y2={topPadding + graphHeight}
-                  stroke={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '3' : '6'})`}
-                  strokeWidth="1"
-                  strokeDasharray="3,3"
-                  opacity="0.5"
-                />
-              )}
-            </>
-          )}
-          
           {/* ADSR curve segments - visual paths first */}
           {/* Attack segment - exponential curve */}
           <path
