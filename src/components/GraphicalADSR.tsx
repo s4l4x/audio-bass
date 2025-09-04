@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { Box, useMantineTheme, useComputedColorScheme } from '@mantine/core'
+import { Box, useMantineTheme, useComputedColorScheme, Button } from '@mantine/core'
 import type { ADSRSettings, CurveType } from '../hooks/useADSR'
 
 interface GraphicalADSRProps {
@@ -15,6 +15,7 @@ interface GraphicalADSRProps {
   width?: number
   height?: number
   totalDuration?: number
+  onReset?: () => void
 }
 
 interface ControlPoint {
@@ -30,7 +31,8 @@ export function GraphicalADSR({
   ranges,
   width = 400,
   height = 200,
-  totalDuration
+  totalDuration,
+  onReset
 }: GraphicalADSRProps) {
   const theme = useMantineTheme();
   const computedColorScheme = useComputedColorScheme('light');
@@ -263,9 +265,30 @@ export function GraphicalADSR({
           border: `1px solid var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '4' : '3'})`,
           borderRadius: '8px',
           padding: '4px',
-          backgroundColor: `var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '6' : '0'})`
+          backgroundColor: `var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '6' : '0'})`,
+          position: 'relative'
         }}
       >
+        {/* Reset button positioned in top-right corner */}
+        {onReset && (
+          <Button
+            size="xs"
+            variant="subtle"
+            onClick={onReset}
+            style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              zIndex: 10,
+              fontSize: '10px',
+              height: '20px',
+              minHeight: '20px',
+              padding: '0 6px'
+            }}
+          >
+            Reset
+          </Button>
+        )}
         <svg
           ref={svgRef}
           width={width}

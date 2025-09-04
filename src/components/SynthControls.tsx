@@ -61,13 +61,16 @@ export function SynthControls({
 
       <div>
         <Text size="xs" mb="4px">
-          Frequency: {settings.frequency} Hz
+          Frequency: {settings.frequency >= 1000 ? `${(settings.frequency / 1000).toFixed(1)}k` : settings.frequency} Hz
         </Text>
         <Slider
-          value={settings.frequency}
-          onChange={(value) => onSettingsChange({ frequency: value })}
-          min={200}
-          max={800}
+          value={Math.log10(settings.frequency / 20) * 100}
+          onChange={(scaledValue) => {
+            const frequency = Math.round(20 * Math.pow(10, scaledValue / 100))
+            onSettingsChange({ frequency })
+          }}
+          min={0}
+          max={300}
           step={1}
           size="sm"
         />
@@ -105,7 +108,6 @@ export function SynthControls({
       </div>
 
       <ADSRControls
-        label="ADSR"
         initialSettings={settings.envelope}
         onSettingsChange={handleADSRChange}
         totalDuration={settings.envelope.attack + settings.envelope.decay + settings.envelope.sustainDuration + settings.envelope.release}

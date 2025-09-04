@@ -1,17 +1,14 @@
-import { Stack, Text, Group, Button } from '@mantine/core'
 import { useADSR } from '../hooks/useADSR'
 import { GraphicalADSR } from './GraphicalADSR'
 import type { UseADSROptions, ADSRSettings } from '../hooks/useADSR'
 
 interface ADSRControlsProps extends UseADSROptions {
   onSettingsChange?: (settings: ADSRSettings) => void
-  label?: string
   totalDuration?: number
 }
 
 export function ADSRControls({ 
   onSettingsChange, 
-  label = "",
   initialSettings,
   totalDuration,
   ...adsrOptions 
@@ -38,24 +35,12 @@ export function ADSRControls({
   }
 
   return (
-    <Stack gap="sm">
-      {label && (
-        <Group justify="space-between" align="center">
-          <Text size="md" fw={500}>
-            {label}
-          </Text>
-          <Button size="xs" variant="subtle" onClick={resetToDefaults}>
-            Reset
-          </Button>
-        </Group>
-      )}
-
-      <GraphicalADSR
-        settings={currentSettings}
-        onSettingsChange={handleGraphicalChange}
-        ranges={ranges}
-        totalDuration={totalDuration}
-      />
-    </Stack>
+    <GraphicalADSR
+      settings={currentSettings}
+      onSettingsChange={handleGraphicalChange}
+      ranges={ranges}
+      totalDuration={totalDuration}
+      onReset={resetToDefaults}
+    />
   )
 }
