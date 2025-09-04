@@ -1,4 +1,4 @@
-import { Container, Title, Center, Select, Divider, Box } from '@mantine/core'
+import { Container, Title, Center, Select, Divider, Box, Paper } from '@mantine/core'
 import { useInstrument } from './hooks/useInstrument'
 import { SynthControls } from './components/SynthControls'
 import { BassKickControls } from './components/BassKickControls'
@@ -72,9 +72,9 @@ function App() {
             mb="xl"
           />
 
-          <Divider mb="lg" />
-
-          {renderInstrumentControls()}
+          <Paper shadow="sm" p="lg" withBorder>
+            {renderInstrumentControls()}
+          </Paper>
         </Container>
       </Center>
     </Box>
