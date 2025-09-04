@@ -53,7 +53,7 @@ export function BassKickControls({
 
       <WaveformVisualization
         getWaveformData={getWaveformData}
-        totalDuration={settings.envelope.attack + settings.envelope.decay + settings.envelope.sustainDuration + settings.envelope.release}
+        adsrSettings={settings.envelope}
       />
 
       <div>

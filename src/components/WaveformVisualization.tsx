@@ -7,6 +7,7 @@ interface WaveformVisualizationProps {
   height?: number
   isGenerating?: boolean
   totalDuration?: number
+  adsrSettings?: { attack: number; decay: number; sustainDuration: number; release: number }
 }
 
 export function WaveformVisualization({
@@ -14,18 +15,25 @@ export function WaveformVisualization({
   width = 400,
   height = 120,
   isGenerating = false,
-  totalDuration = 5.0
+  totalDuration = 5.0,
+  adsrSettings
 }: WaveformVisualizationProps) {
   const theme = useMantineTheme()
   const computedColorScheme = useComputedColorScheme('light')
   const gridConfig = theme.other.graphGrid
   const isDark = computedColorScheme === 'dark'
   const [waveformPath, setWaveformPath] = useState('')
-  const [lastDataLength, setLastDataLength] = useState(0)
 
   const padding = 15
   const graphWidth = width - padding * 2
   const graphHeight = height - padding * 2
+  
+  // Calculate actual duration from ADSR settings if provided, otherwise use totalDuration
+  // Use 1-second minimum to match ADSR graph and prevent snapping
+  const calculatedDuration = adsrSettings 
+    ? adsrSettings.attack + adsrSettings.decay + adsrSettings.sustainDuration + adsrSettings.release
+    : totalDuration
+  const actualDuration = Math.max(calculatedDuration, 1.0)
 
   const updateWaveform = () => {
     if (!getWaveformData || typeof getWaveformData !== 'function') {
@@ -37,7 +45,6 @@ export function WaveformVisualization({
       return
     }
 
-    setLastDataLength(waveformData.length)
 
     // Convert waveform data to SVG path with time-based positioning
     const centerY = padding + graphHeight / 2
@@ -46,8 +53,8 @@ export function WaveformVisualization({
     for (let i = 0; i < waveformData.length; i++) {
       // Position based on actual time rather than sample index
       const timeRatio = i / (waveformData.length - 1) // 0 to 1
-      const actualTime = timeRatio * totalDuration // 0 to totalDuration seconds
-      const x = padding + (actualTime / totalDuration) * graphWidth
+      const actualTime = timeRatio * actualDuration // 0 to actualDuration seconds
+      const x = padding + (actualTime / actualDuration) * graphWidth
       const y = centerY - (waveformData[i] * graphHeight * 0.4) // Scale amplitude
       
       if (i === 0) {
@@ -60,10 +67,10 @@ export function WaveformVisualization({
     setWaveformPath(pathCommands.join(' '))
   }
 
-  // Update waveform immediately when new data becomes available
+  // Update waveform immediately when new data becomes available or duration changes
   useEffect(() => {
     updateWaveform()
-  }, [getWaveformData])
+  }, [getWaveformData, actualDuration, adsrSettings])
 
   // Also update when getWaveformData function changes (new data available)
   useEffect(() => {
@@ -75,7 +82,7 @@ export function WaveformVisualization({
     const interval = setInterval(updateWaveform, 1000)
     
     return () => clearInterval(interval)
-  }, [getWaveformData])
+  }, [getWaveformData, actualDuration, adsrSettings])
 
   return (
     <Box
@@ -88,7 +95,7 @@ export function WaveformVisualization({
     >
       <svg
         width={width}
-        height={height + 20}
+        height={height + 10}
         style={{
           userSelect: 'none'
         }}
@@ -108,12 +115,12 @@ export function WaveformVisualization({
           />
           
           {/* Time-based vertical grid lines */}
-          {Array.from({ length: Math.ceil(totalDuration) + 1 }, (_, i) => (
+          {Array.from({ length: Math.ceil(actualDuration) + 1 }, (_, i) => (
             <g key={`time-${i}`}>
               <line
-                x1={padding + (i / totalDuration) * graphWidth}
+                x1={padding + (i / actualDuration) * graphWidth}
                 y1={padding}
-                x2={padding + (i / totalDuration) * graphWidth}
+                x2={padding + (i / actualDuration) * graphWidth}
                 y2={padding + graphHeight}
                 stroke={isDark ? gridConfig.stroke.dark : gridConfig.stroke.light}
                 strokeWidth={gridConfig.stroke.width}
@@ -121,8 +128,8 @@ export function WaveformVisualization({
               />
               {/* Time labels */}
               <text
-                x={padding + (i / totalDuration) * graphWidth}
-                y={padding + graphHeight + 15}
+                x={padding + (i / actualDuration) * graphWidth}
+                y={padding + graphHeight + 10}
                 textAnchor="middle"
                 fontSize="10"
                 fill={isDark ? gridConfig.text.dark : gridConfig.text.light}

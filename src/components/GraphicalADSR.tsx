@@ -57,14 +57,15 @@ export function GraphicalADSR({
   const graphHeight = height - topPadding - padding
   const gridSpacingY = graphHeight / 6 // 6 horizontal divisions
   
-  // Calculate actual total duration, allowing for dynamic expansion while dragging
-  const currentTotalDuration = settings.attack + settings.decay + settings.sustainDuration + settings.release
-  // When dragging, allow the graph to show more space than the current duration for easier extension
-  const actualTotalDuration = Math.max(
-    currentTotalDuration, 
-    totalDuration || currentTotalDuration,
-    3.0 // Always show at least 3 seconds for easy dragging
-  )
+  // Track the live settings during drag for real-time duration calculation
+  const [liveSettings, setLiveSettings] = useState(settings)
+  
+  // Use live settings during drag for real-time duration updates
+  const currentSettings = dragState.isDragging ? liveSettings : settings
+  const currentTotalDuration = currentSettings.attack + currentSettings.decay + currentSettings.sustainDuration + currentSettings.release
+  
+  // Use consistent 1-second minimum to prevent graph snapping
+  const actualTotalDuration = Math.max(currentTotalDuration, 1.0)
 
   // Use flexible ranges with defaults
   const defaultRanges = {
@@ -85,15 +86,15 @@ export function GraphicalADSR({
   const [sustainMinDuration, sustainMaxDuration] = actualRanges.sustainDuration
   const [releaseMinTime, releaseMaxTime] = actualRanges.release
   
-  // Time-based positioning instead of percentage-based
-  const attackX = padding + (settings.attack / actualTotalDuration) * graphWidth
-  const decayX = padding + ((settings.attack + settings.decay) / actualTotalDuration) * graphWidth
-  const sustainX = padding + ((settings.attack + settings.decay + settings.sustainDuration) / actualTotalDuration) * graphWidth
-  const releaseX = padding + ((settings.attack + settings.decay + settings.sustainDuration + settings.release) / actualTotalDuration) * graphWidth
+  // Time-based positioning using current settings (live during drag)
+  const attackX = padding + (currentSettings.attack / actualTotalDuration) * graphWidth
+  const decayX = padding + ((currentSettings.attack + currentSettings.decay) / actualTotalDuration) * graphWidth
+  const sustainX = padding + ((currentSettings.attack + currentSettings.decay + currentSettings.sustainDuration) / actualTotalDuration) * graphWidth
+  const releaseX = padding + ((currentSettings.attack + currentSettings.decay + currentSettings.sustainDuration + currentSettings.release) / actualTotalDuration) * graphWidth
 
   // Y positions (inverted because SVG y increases downward)
   const topY = topPadding
-  const sustainY = topPadding + (1 - settings.sustain) * graphHeight
+  const sustainY = topPadding + (1 - currentSettings.sustain) * graphHeight
   const bottomY = topPadding + graphHeight
 
   // Control points
@@ -172,16 +173,20 @@ export function GraphicalADSR({
     
     switch (dragState.dragId) {
       case 'attack':
-        // Attack time - X-only movement
-        const attackTime = Math.max(attackMinTime, Math.min(attackMaxTime, timeAtMouseX))
+        // Attack time - X-only movement - allow extending beyond normal bounds
+        const attackTime = Math.max(attackMinTime, 
+          Math.min(attackMaxTime * 3, timeAtMouseX) // Allow up to 3x the normal max
+        )
         newSettings.attack = attackTime
         break
         
       case 'decay':
-        // Decay point can be moved freely along time axis
+        // Decay point can be moved freely along time axis - allow extending beyond normal bounds
         // The decay phase ends at this point, so decay duration = this time - attack time
         const decayEndTime = Math.max(settings.attack + decayMinTime, timeAtMouseX)
-        const newDecayTime = Math.max(decayMinTime, Math.min(decayMaxTime, decayEndTime - settings.attack))
+        const newDecayTime = Math.max(decayMinTime, 
+          Math.min(decayMaxTime * 3, decayEndTime - settings.attack) // Allow up to 3x the normal max
+        )
         newSettings.decay = newDecayTime
         
         // Sustain level - Y movement (decay endpoint determines sustain level)
@@ -218,8 +223,10 @@ export function GraphicalADSR({
         break
     }
     
+    // Update live settings for real-time duration calculation
+    setLiveSettings(newSettings)
     onSettingsChange(newSettings)
-  }, [dragState, settings, onSettingsChange, attackX, sustainX, decayX, graphWidth, graphHeight, padding, topPadding, attackMinTime, attackMaxTime, decayMinTime, decayMaxTime, sustainMinDuration, sustainMaxDuration, releaseMinTime, releaseMaxTime])
+  }, [dragState, settings, onSettingsChange, actualTotalDuration, graphWidth, graphHeight, padding, topPadding, attackMinTime, attackMaxTime, decayMinTime, decayMaxTime, sustainMinDuration, sustainMaxDuration, releaseMinTime, releaseMaxTime])
 
   const handleMouseUp = useCallback(() => {
     setDragState({
@@ -229,6 +236,13 @@ export function GraphicalADSR({
     })
   }, [])
 
+  // Sync live settings with actual settings when not dragging
+  useEffect(() => {
+    if (!dragState.isDragging) {
+      setLiveSettings(settings)
+    }
+  }, [settings, dragState.isDragging])
+  
   // Add document-level event listeners when dragging
   useEffect(() => {
     if (dragState.isDragging) {
@@ -255,7 +269,7 @@ export function GraphicalADSR({
         <svg
           ref={svgRef}
           width={width}
-          height={height + 20}
+          height={height + 10}
           style={{ 
             cursor: dragState.isDragging ? 'grabbing' : 'default',
             userSelect: 'none'
@@ -278,7 +292,7 @@ export function GraphicalADSR({
                 {/* Time labels */}
                 <text
                   x={padding + (i / actualTotalDuration) * graphWidth}
-                  y={topPadding + graphHeight + 15}
+                  y={topPadding + graphHeight + 10}
                   textAnchor="middle"
                   fontSize="10"
                   fill={isDark ? gridConfig.text.dark : gridConfig.text.light}

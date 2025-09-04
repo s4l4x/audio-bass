@@ -110,6 +110,10 @@ const applySettingsToInstrument = (instrument: Tone.Synth | Tone.MembraneSynth, 
     membraneSynth.envelope.attackCurve = membraneSettings.envelope.attackCurve
     membraneSynth.envelope.decayCurve = membraneSettings.envelope.decayCurve
     membraneSynth.envelope.releaseCurve = membraneSettings.envelope.releaseCurve
+    // Set sustainDuration for proper ADSR behavior
+    if ('sustainDuration' in membraneSynth.envelope) {
+      membraneSynth.envelope.sustainDuration = membraneSettings.envelope.sustainDuration
+    }
   }
 }
 
@@ -136,10 +140,13 @@ export function useInstrument(initialType: InstrumentType) {
   const generateWaveform = async (type: InstrumentType, settings: InstrumentSettings) => {
     try {
       // Calculate buffer duration based on instrument type
-      let bufferDuration = 1.0 // Default for membrane synth
+      let bufferDuration = 1.0 // Default fallback
       if (type === 'synth') {
         const synthSettings = settings as SynthSettings
         bufferDuration = calculateADSRDuration(synthSettings.envelope) + 0.1 // Add small buffer
+      } else if (type === 'membraneSynth') {
+        const membraneSettings = settings as MembraneSynthSettings
+        bufferDuration = calculateADSRDuration(membraneSettings.envelope) + 0.1 // Add small buffer
       }
       
       const buffer = await Tone.Offline((context) => {
@@ -153,6 +160,7 @@ export function useInstrument(initialType: InstrumentType) {
               attack: membraneSettings.envelope.attack,
               decay: membraneSettings.envelope.decay,
               sustain: membraneSettings.envelope.sustain,
+              sustainDuration: membraneSettings.envelope.sustainDuration,
               release: membraneSettings.envelope.release,
               attackCurve: membraneSettings.envelope.attackCurve,
               decayCurve: membraneSettings.envelope.decayCurve,
@@ -162,7 +170,15 @@ export function useInstrument(initialType: InstrumentType) {
           })
           
           synth.connect(context.destination)
-          synth.triggerAttackRelease('C2', '8n')
+          
+          // For membrane synth, use triggerAttack + triggerRelease for better ADSR control
+          synth.triggerAttack('C2', 0)
+          
+          // Schedule the release at the correct time (after attack + decay + sustainDuration)
+          const releaseTime = membraneSettings.envelope.attack + 
+                             membraneSettings.envelope.decay + 
+                             membraneSettings.envelope.sustainDuration
+          synth.triggerRelease(releaseTime)
         } else if (type === 'synth') {
           const synthSettings = settings as SynthSettings
           console.log('🎛️ Creating Tone.Synth with envelope:', {
@@ -188,11 +204,16 @@ export function useInstrument(initialType: InstrumentType) {
           })
           
           synth.connect(context.destination)
-          // For triggerAttackRelease, the duration should only be the sustain duration
-          // The attack, decay, and release are handled by the envelope itself
-          const noteDuration = synthSettings.envelope.sustainDuration
-          console.log('🎵 Triggering synth with frequency:', synthSettings.frequency, 'note duration:', noteDuration)
-          synth.triggerAttackRelease(synthSettings.frequency, noteDuration)
+          
+          // Use triggerAttack + triggerRelease for proper ADSR timing
+          synth.triggerAttack(synthSettings.frequency, 0)
+          
+          // Schedule the release at the correct time (after attack + decay + sustainDuration)
+          const releaseTime = synthSettings.envelope.attack + 
+                             synthSettings.envelope.decay + 
+                             synthSettings.envelope.sustainDuration
+          console.log('🎵 Triggering synth with frequency:', synthSettings.frequency, 'release at:', releaseTime)
+          synth.triggerRelease(releaseTime)
         }
       }, bufferDuration)
       
