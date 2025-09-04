@@ -61,7 +61,7 @@ const getDefaultSettings = (type: InstrumentType): InstrumentSettings => {
         pitchDecay: 0.05,
         octaves: 10,
         envelope: { 
-          attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4,
+          attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4, sustainDuration: 0.1,
           attackCurve: 'exponential', decayCurve: 'exponential', releaseCurve: 'exponential'
         },
         oscillatorType: 'sine'
@@ -141,16 +141,33 @@ export function useInstrument(initialType: InstrumentType) {
   
   const [isPlaying, setIsPlaying] = useState(false)
   const instrumentRef = useRef<Tone.Synth | Tone.MembraneSynth | Tone.AMSynth | Tone.FMSynth | null>(null)
+  const waveformRef = useRef<Tone.Recorder | null>(null)
+  const [lastRecording, setLastRecording] = useState<AudioBuffer | null>(null)
 
   // Initialize instrument
   useEffect(() => {
     console.log('🔧 Initializing instrument:', config.type)
     
+    // Cleanup previous instrument and waveform
     if (instrumentRef.current) {
       instrumentRef.current.dispose()
     }
+    if (waveformRef.current) {
+      waveformRef.current.dispose()
+    }
     
-    instrumentRef.current = createInstrument(config.type).toDestination()
+    // Create new instrument
+    instrumentRef.current = createInstrument(config.type)
+    
+    // Create waveform recorder for bass kick visualization
+    if (config.type === 'membraneSynth') {
+      waveformRef.current = new Tone.Recorder()
+      instrumentRef.current.connect(waveformRef.current)
+      console.log('🌊 Recorder connected to MembraneSynth for waveform capture')
+    }
+    
+    // Connect to destination
+    instrumentRef.current.toDestination()
     console.log('✅ Instrument created and connected to destination')
     
     applySettingsToInstrument(instrumentRef.current, config.type, config.settings)
@@ -159,6 +176,9 @@ export function useInstrument(initialType: InstrumentType) {
     return () => {
       if (instrumentRef.current) {
         instrumentRef.current.dispose()
+      }
+      if (waveformRef.current) {
+        waveformRef.current.dispose()
       }
     }
   }, [config.type])
@@ -250,12 +270,60 @@ export function useInstrument(initialType: InstrumentType) {
     }
 
     if (config.type === 'membraneSynth') {
+      // Start recording for waveform capture
+      if (waveformRef.current) {
+        try {
+          waveformRef.current.start()
+          console.log('🎥 Recording started')
+        } catch (e) {
+          console.log('Recording already in progress')
+        }
+      }
+      
       ;(instrumentRef.current as Tone.MembraneSynth).triggerAttackRelease('C2', duration)
+      
+      // Stop recording after the main part of the envelope (optimized for kick drums)
+      if (waveformRef.current) {
+        const envelope = (config.settings as MembraneSynthSettings).envelope
+        // For kick drums, most of the interesting waveform happens in attack + decay + brief sustain
+        // Cap at 2 seconds max to avoid long waits
+        const captureTime = Math.min(2.0, envelope.attack + envelope.decay + 0.5)
+        
+        setTimeout(async () => {
+          try {
+            const recording = await waveformRef.current!.stop()
+            // Convert Blob to AudioBuffer
+            const arrayBuffer = await recording.arrayBuffer()
+            const audioBuffer = await Tone.getContext().decodeAudioData(arrayBuffer)
+            setLastRecording(audioBuffer)
+            console.log('🎥 Recording stopped, waveform captured')
+          } catch (e) {
+            console.error('Error stopping recording:', e)
+          }
+        }, captureTime * 1000 + 50) // Reduced buffer
+      }
     } else {
       const frequency = note || (config.settings as SynthSettings).frequency || 440
       ;(instrumentRef.current as Tone.Synth).triggerAttackRelease(frequency, duration)
     }
   }, [config.type, config.settings])
+
+  const getWaveformData = useCallback((): Float32Array | null => {
+    if (lastRecording && config.type === 'membraneSynth') {
+      // Return the actual audio waveform data from the recording
+      const channelData = lastRecording.getChannelData(0) // Get mono channel
+      // Downsample for visualization (every 100th sample for ~4000 samples -> 40 points)
+      const downsampleRate = Math.max(1, Math.floor(channelData.length / 1000))
+      const downsampled = new Float32Array(Math.ceil(channelData.length / downsampleRate))
+      
+      for (let i = 0; i < downsampled.length; i++) {
+        downsampled[i] = channelData[i * downsampleRate] || 0
+      }
+      
+      return downsampled
+    }
+    return null
+  }, [lastRecording, config.type])
 
   return {
     config,
@@ -264,6 +332,7 @@ export function useInstrument(initialType: InstrumentType) {
     updateSettings,
     triggerAttack,
     triggerRelease,
-    triggerAttackRelease
+    triggerAttackRelease,
+    getWaveformData
   }
 }

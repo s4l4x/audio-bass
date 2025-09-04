@@ -1,5 +1,6 @@
 import { Stack, Text, Slider, Select, Button, Group } from '@mantine/core'
 import { ADSRControls } from './ADSRControls'
+import { WaveformVisualization } from './WaveformVisualization'
 import type { MembraneSynthSettings } from '../types/instruments'
 import type { ADSRSettings } from '../hooks/useADSR'
 
@@ -7,12 +8,14 @@ interface BassKickControlsProps {
   settings: MembraneSynthSettings
   onSettingsChange: (settings: Partial<MembraneSynthSettings>) => void
   onTrigger: () => void
+  getWaveformData: () => Float32Array | null
 }
 
 export function BassKickControls({ 
   settings, 
   onSettingsChange, 
-  onTrigger 
+  onTrigger,
+  getWaveformData
 }: BassKickControlsProps) {
   const handleADSRChange = (envelope: ADSRSettings) => {
     onSettingsChange({ envelope })
@@ -96,6 +99,10 @@ export function BassKickControls({
           release: [0.001, 3.0]
         }}
         onSettingsChange={handleADSRChange}
+      />
+
+      <WaveformVisualization
+        getWaveformData={getWaveformData}
       />
     </Stack>
   )

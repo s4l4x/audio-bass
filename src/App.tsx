@@ -13,7 +13,8 @@ function App() {
     updateSettings, 
     triggerAttack, 
     triggerRelease, 
-    triggerAttackRelease 
+    triggerAttackRelease,
+    getWaveformData
   } = useInstrument('synth')
 
   const instrumentOptions = [
@@ -44,6 +45,7 @@ function App() {
             settings={config.settings as MembraneSynthSettings}
             onSettingsChange={updateSettings}
             onTrigger={() => triggerAttackRelease()}
+            getWaveformData={getWaveformData}
           />
         )
       
