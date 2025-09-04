@@ -114,7 +114,7 @@ export function DebugMenu() {
           <Menu.Label>Appearance</Menu.Label>
           <AppearanceControls />
 
-          <Menu.Divider />
+          {/* <Menu.Divider /> */}
 
           <Menu.Label>Debug Tools</Menu.Label>
           <Menu.Item 
