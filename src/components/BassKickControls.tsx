@@ -1,4 +1,4 @@
-import { Stack, Text, Slider, Select, Button, Group } from '@mantine/core'
+import { Stack, Text, Slider, Select, Button, Group, Title } from '@mantine/core'
 import { ADSRControls } from './ADSRControls'
 import { WaveformVisualization } from './WaveformVisualization'
 import type { MembraneSynthSettings } from '../types/instruments'
@@ -25,16 +25,29 @@ export function BassKickControls({
 
   return (
     <Stack gap="lg">
-      <Group justify="center">
+      <Group justify="space-between" align="center">
+        <Title order={3} size="lg" fw="500">Bass Kick</Title>
         <Button 
-          w={80}
-          h={80}
+          w={30}
+          h={30}
           onClick={onTrigger}
           variant={isPlaying ? "filled" : "outline"}
           color="red"
-          style={{ outline: 'none' }}
+          size="xs"
+          style={{ 
+            outline: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0
+          }}
         >
-          TAP
+          <div style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            backgroundColor: isPlaying ? 'white' : 'var(--mantine-color-red-6)'
+          }} />
         </Button>
       </Group>
 

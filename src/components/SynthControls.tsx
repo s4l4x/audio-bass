@@ -1,4 +1,4 @@
-import { Stack, Text, Slider, Select, Button, Group } from '@mantine/core'
+import { Stack, Text, Slider, Select, Button, Group, Title } from '@mantine/core'
 import { ADSRControls } from './ADSRControls'
 import type { SynthSettings } from '../types/instruments'
 import type { ADSRSettings } from '../hooks/useADSR'
@@ -24,17 +24,30 @@ export function SynthControls({
 
   return (
     <Stack gap="lg">
-      <Group justify="center">
+      <Group justify="space-between" align="center">
+        <Title order={3} size="lg">Synthesizer</Title>
         <Button 
-          w={80}
-          h={80}
+          w={30}
+          h={30}
           onMouseDown={() => onPlay()}
           onMouseUp={() => onStop()}
           onMouseLeave={() => onStop()}
           variant={isPlaying ? "filled" : "outline"}
-          style={{ outline: 'none' }}
+          size="xs"
+          style={{ 
+            outline: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0
+          }}
         >
-          PRESS
+          <div style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            backgroundColor: isPlaying ? 'white' : 'var(--mantine-color-blue-6)'
+          }} />
         </Button>
       </Group>
 
