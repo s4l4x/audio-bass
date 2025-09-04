@@ -27,10 +27,12 @@ export function SynthControls({
       <Group justify="center">
         <Button 
           size="lg" 
-          onClick={isPlaying ? onStop : onPlay}
+          onMouseDown={onPlay}
+          onMouseUp={onStop}
+          onMouseLeave={onStop}
           variant={isPlaying ? "filled" : "outline"}
         >
-          {isPlaying ? 'Stop' : 'Play'} Tone
+          Hold to Play
         </Button>
       </Group>
 
