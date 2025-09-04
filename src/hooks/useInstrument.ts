@@ -142,7 +142,40 @@ export function useInstrument(initialType: InstrumentType) {
   const [isPlaying, setIsPlaying] = useState(false)
   const instrumentRef = useRef<Tone.Synth | Tone.MembraneSynth | Tone.AMSynth | Tone.FMSynth | null>(null)
   const waveformRef = useRef<Tone.Recorder | null>(null)
-  const [lastRecording, setLastRecording] = useState<AudioBuffer | null>(null)
+  const [isGeneratingWaveform, setIsGeneratingWaveform] = useState(false)
+  const lastRecordingRef = useRef<AudioBuffer | null>(null)
+  const [waveformDataVersion, setWaveformDataVersion] = useState(0)
+
+  // Simple waveform generation - no React dependencies
+  const generateWaveform = async (settings: MembraneSynthSettings) => {
+    try {
+      const buffer = await Tone.Offline((context) => {
+        const synth = new Tone.MembraneSynth({
+          pitchDecay: settings.pitchDecay,
+          octaves: settings.octaves,
+          oscillator: { type: settings.oscillatorType },
+          envelope: {
+            attack: settings.envelope.attack,
+            decay: settings.envelope.decay,
+            sustain: settings.envelope.sustain,
+            release: settings.envelope.release,
+            attackCurve: settings.envelope.attackCurve,
+            decayCurve: settings.envelope.decayCurve,
+            releaseCurve: settings.envelope.releaseCurve
+          },
+          volume: settings.volume
+        })
+        
+        synth.connect(context.destination)
+        synth.triggerAttackRelease('C2', '8n')
+      }, 1.0)
+      
+      lastRecordingRef.current = buffer
+      setWaveformDataVersion(prev => prev + 1)
+    } catch (error) {
+      console.error('Error generating waveform:', error)
+    }
+  }
 
   // Initialize instrument
   useEffect(() => {
@@ -190,6 +223,16 @@ export function useInstrument(initialType: InstrumentType) {
     }
   }, [config.settings, config.type])
 
+  // Generate initial waveform after instrument is created (separate from initialization)
+  useEffect(() => {
+    if (config.type === 'membraneSynth' && instrumentRef.current) {
+      // Use a timeout to ensure we're fully initialized
+      setTimeout(() => {
+        generateWaveform(config.settings as MembraneSynthSettings)
+      }, 100)
+    }
+  }, [config.type])
+
   const changeInstrumentType = useCallback((type: InstrumentType) => {
     setConfig(prev => ({
       ...prev,
@@ -201,11 +244,25 @@ export function useInstrument(initialType: InstrumentType) {
   }, [])
 
   const updateSettings = useCallback((newSettings: Partial<InstrumentSettings>) => {
-    setConfig(prev => ({
-      ...prev,
-      settings: { ...prev.settings, ...newSettings }
-    }))
+    setConfig(prev => {
+      const updatedConfig = {
+        ...prev,
+        settings: { ...prev.settings, ...newSettings }
+      }
+      
+      // Generate waveform immediately for MembraneSynth
+      if (updatedConfig.type === 'membraneSynth') {
+        setTimeout(() => {
+          generateWaveform(updatedConfig.settings as MembraneSynthSettings)
+        }, 100) // Small delay to let state update
+      }
+      
+      return updatedConfig
+    })
   }, [])
+
+  // Temporarily disable real-time updates to focus on basic functionality
+  // const debounceTimeoutRef = useRef<NodeJS.Timeout>()
 
   const triggerAttack = useCallback(async (note?: string | number) => {
     console.log('🎵 triggerAttack called for:', config.type)
@@ -270,38 +327,8 @@ export function useInstrument(initialType: InstrumentType) {
     }
 
     if (config.type === 'membraneSynth') {
-      // Start recording for waveform capture
-      if (waveformRef.current) {
-        try {
-          waveformRef.current.start()
-          console.log('🎥 Recording started')
-        } catch (e) {
-          console.log('Recording already in progress')
-        }
-      }
-      
+      // Just play the sound - no waveform recording since we have real-time generation
       ;(instrumentRef.current as Tone.MembraneSynth).triggerAttackRelease('C2', duration)
-      
-      // Stop recording after the main part of the envelope (optimized for kick drums)
-      if (waveformRef.current) {
-        const envelope = (config.settings as MembraneSynthSettings).envelope
-        // For kick drums, most of the interesting waveform happens in attack + decay + brief sustain
-        // Cap at 2 seconds max to avoid long waits
-        const captureTime = Math.min(2.0, envelope.attack + envelope.decay + 0.5)
-        
-        setTimeout(async () => {
-          try {
-            const recording = await waveformRef.current!.stop()
-            // Convert Blob to AudioBuffer
-            const arrayBuffer = await recording.arrayBuffer()
-            const audioBuffer = await Tone.getContext().decodeAudioData(arrayBuffer)
-            setLastRecording(audioBuffer)
-            console.log('🎥 Recording stopped, waveform captured')
-          } catch (e) {
-            console.error('Error stopping recording:', e)
-          }
-        }, captureTime * 1000 + 50) // Reduced buffer
-      }
     } else {
       const frequency = note || (config.settings as SynthSettings).frequency || 440
       ;(instrumentRef.current as Tone.Synth).triggerAttackRelease(frequency, duration)
@@ -309,9 +336,9 @@ export function useInstrument(initialType: InstrumentType) {
   }, [config.type, config.settings])
 
   const getWaveformData = useCallback((): Float32Array | null => {
-    if (lastRecording && config.type === 'membraneSynth') {
+    if (lastRecordingRef.current && config.type === 'membraneSynth') {
       // Return the actual audio waveform data from the recording
-      const channelData = lastRecording.getChannelData(0) // Get mono channel
+      const channelData = lastRecordingRef.current.getChannelData(0) // Get mono channel
       // Downsample for visualization (every 100th sample for ~4000 samples -> 40 points)
       const downsampleRate = Math.max(1, Math.floor(channelData.length / 1000))
       const downsampled = new Float32Array(Math.ceil(channelData.length / downsampleRate))
@@ -322,8 +349,9 @@ export function useInstrument(initialType: InstrumentType) {
       
       return downsampled
     }
+    
     return null
-  }, [lastRecording, config.type])
+  }, [config.type, waveformDataVersion])
 
   return {
     config,

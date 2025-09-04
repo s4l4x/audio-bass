@@ -5,12 +5,14 @@ interface WaveformVisualizationProps {
   getWaveformData?: () => Float32Array | null
   width?: number
   height?: number
+  isGenerating?: boolean
 }
 
 export function WaveformVisualization({
   getWaveformData,
   width = 400,
-  height = 120
+  height = 120,
+  isGenerating = false
 }: WaveformVisualizationProps) {
   const theme = useMantineTheme()
   const computedColorScheme = useComputedColorScheme('light')
@@ -24,7 +26,6 @@ export function WaveformVisualization({
 
   const updateWaveform = () => {
     if (!getWaveformData || typeof getWaveformData !== 'function') {
-      console.warn('getWaveformData is not available')
       return
     }
     
@@ -33,10 +34,6 @@ export function WaveformVisualization({
       return
     }
 
-    // Only update if we have new data
-    if (waveformData.length === lastDataLength) {
-      return
-    }
     setLastDataLength(waveformData.length)
 
     // Convert waveform data to SVG path
@@ -57,14 +54,19 @@ export function WaveformVisualization({
     setWaveformPath(pathCommands.join(' '))
   }
 
-  // Check for new waveform data periodically but not too frequently
+  // Update waveform immediately when new data becomes available
+  useEffect(() => {
+    updateWaveform()
+  }, [getWaveformData])
+
+  // Also update when getWaveformData function changes (new data available)
   useEffect(() => {
     if (!getWaveformData || typeof getWaveformData !== 'function') {
       return
     }
     
-    const interval = setInterval(updateWaveform, 500) // Check every 500ms
-    updateWaveform() // Initial check
+    // Check for new data periodically but less frequently (for live recording)
+    const interval = setInterval(updateWaveform, 1000)
     
     return () => clearInterval(interval)
   }, [getWaveformData])
@@ -122,7 +124,22 @@ export function WaveformVisualization({
             stroke={isDark ? 'var(--mantine-color-blue-4)' : 'var(--mantine-color-blue-6)'}
             strokeWidth="1"
             strokeLinejoin="round"
+            opacity={isGenerating ? 0.5 : 1}
           />
+        )}
+        
+        {/* Loading indicator */}
+        {isGenerating && (
+          <text
+            x={width / 2}
+            y={height / 2}
+            textAnchor="middle"
+            fontSize="12"
+            fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '2' : '6'})`}
+            opacity="0.7"
+          >
+            Updating...
+          </text>
         )}
 
         {/* Labels */}
