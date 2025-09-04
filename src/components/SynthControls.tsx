@@ -56,6 +56,7 @@ export function SynthControls({
 
       <WaveformVisualization
         getWaveformData={getWaveformData}
+        totalDuration={settings.envelope.attack + settings.envelope.decay + settings.envelope.sustainDuration + settings.envelope.release}
       />
 
       <div>
@@ -107,6 +108,7 @@ export function SynthControls({
         label="ADSR"
         initialSettings={settings.envelope}
         onSettingsChange={handleADSRChange}
+        totalDuration={settings.envelope.attack + settings.envelope.decay + settings.envelope.sustainDuration + settings.envelope.release}
       />
     </Stack>
   )

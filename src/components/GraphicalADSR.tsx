@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { Box, useMantineTheme, useComputedColorScheme } from '@mantine/core'
 import type { ADSRSettings, CurveType } from '../hooks/useADSR'
 
@@ -14,6 +14,7 @@ interface GraphicalADSRProps {
   }
   width?: number
   height?: number
+  totalDuration?: number
 }
 
 interface ControlPoint {
@@ -28,9 +29,9 @@ export function GraphicalADSR({
   onSettingsChange,
   ranges,
   width = 400,
-  height = 200 
+  height = 200,
+  totalDuration
 }: GraphicalADSRProps) {
-  const textSpace = 15 // Extra space for the total duration text
   const theme = useMantineTheme();
   const computedColorScheme = useComputedColorScheme('light');
   const colors = theme.other.adsr.colors;
@@ -54,8 +55,16 @@ export function GraphicalADSR({
   const topPadding = padding + labelHeight
   const graphWidth = width - padding * 2
   const graphHeight = height - topPadding - padding
-  const gridSpacingX = graphWidth / 8  // 8 vertical divisions
   const gridSpacingY = graphHeight / 6 // 6 horizontal divisions
+  
+  // Calculate actual total duration, allowing for dynamic expansion while dragging
+  const currentTotalDuration = settings.attack + settings.decay + settings.sustainDuration + settings.release
+  // When dragging, allow the graph to show more space than the current duration for easier extension
+  const actualTotalDuration = Math.max(
+    currentTotalDuration, 
+    totalDuration || currentTotalDuration,
+    3.0 // Always show at least 3 seconds for easy dragging
+  )
 
   // Use flexible ranges with defaults
   const defaultRanges = {
@@ -76,10 +85,11 @@ export function GraphicalADSR({
   const [sustainMinDuration, sustainMaxDuration] = actualRanges.sustainDuration
   const [releaseMinTime, releaseMaxTime] = actualRanges.release
   
-  const attackX = padding + (settings.attack / attackMaxTime) * (graphWidth * 0.2) // 20% of width for attack
-  const decayX = attackX + (settings.decay / decayMaxTime) * (graphWidth * 0.2)   // 20% of width for decay  
-  const sustainX = decayX + (settings.sustainDuration / sustainMaxDuration) * (graphWidth * 0.4)  // 40% of width for sustain
-  const releaseX = sustainX + (settings.release / releaseMaxTime) * (graphWidth * 0.2) // 20% of width for release
+  // Time-based positioning instead of percentage-based
+  const attackX = padding + (settings.attack / actualTotalDuration) * graphWidth
+  const decayX = padding + ((settings.attack + settings.decay) / actualTotalDuration) * graphWidth
+  const sustainX = padding + ((settings.attack + settings.decay + settings.sustainDuration) / actualTotalDuration) * graphWidth
+  const releaseX = padding + ((settings.attack + settings.decay + settings.sustainDuration + settings.release) / actualTotalDuration) * graphWidth
 
   // Y positions (inverted because SVG y increases downward)
   const topY = topPadding
@@ -144,7 +154,7 @@ export function GraphicalADSR({
     })
   }, [])
 
-  const handleMouseMove = useCallback((event: React.MouseEvent) => {
+  const handleMouseMove = useCallback((event: MouseEvent) => {
     if (!dragState.isDragging || !dragState.dragId) return
     
     const rect = svgRef.current?.getBoundingClientRect()
@@ -156,21 +166,23 @@ export function GraphicalADSR({
     // Convert back to ADSR values based on which point is being dragged
     const newSettings = { ...settings }
     
+    // Allow dragging beyond the current graph to extend total duration
+    // Calculate time based on mouse position, allowing extension
+    const timeAtMouseX = ((x - padding) / graphWidth) * actualTotalDuration
+    
     switch (dragState.dragId) {
       case 'attack':
         // Attack time - X-only movement
-        const attackTime = Math.max(attackMinTime, Math.min(attackMaxTime, 
-          ((x - padding) / (graphWidth * 0.2)) * attackMaxTime
-        ))
+        const attackTime = Math.max(attackMinTime, Math.min(attackMaxTime, timeAtMouseX))
         newSettings.attack = attackTime
         break
         
       case 'decay':
-        // Decay time - X movement for duration
-        const decayTime = Math.max(decayMinTime, Math.min(decayMaxTime,
-          ((x - attackX) / (graphWidth * 0.2)) * decayMaxTime
-        ))
-        newSettings.decay = decayTime
+        // Decay point can be moved freely along time axis
+        // The decay phase ends at this point, so decay duration = this time - attack time
+        const decayEndTime = Math.max(settings.attack + decayMinTime, timeAtMouseX)
+        const newDecayTime = Math.max(decayMinTime, Math.min(decayMaxTime, decayEndTime - settings.attack))
+        newSettings.decay = newDecayTime
         
         // Sustain level - Y movement (decay endpoint determines sustain level)
         const decaySustainLevel = Math.max(0, Math.min(1,
@@ -186,18 +198,22 @@ export function GraphicalADSR({
         ))
         newSettings.sustain = sustainPointLevel
         
-        // Sustain duration - X movement for duration
-        const sustainDurationTime = Math.max(sustainMinDuration, Math.min(sustainMaxDuration,
-          ((x - decayX) / (graphWidth * 0.4)) * sustainMaxDuration
-        ))
-        newSettings.sustainDuration = sustainDurationTime
+        // Sustain point can be moved freely along time axis
+        // The sustain phase ends at this point, so sustain duration = this time - (attack + decay)
+        const sustainStartTime = settings.attack + settings.decay
+        const sustainEndTime = Math.max(sustainStartTime + sustainMinDuration, timeAtMouseX)
+        const newSustainDuration = Math.max(sustainMinDuration, 
+          Math.min(sustainMaxDuration * 3, sustainEndTime - sustainStartTime)
+        )
+        newSettings.sustainDuration = newSustainDuration
         break
         
       case 'release':
-        // Release time - X-only movement, independent calculation
-        const releaseTime = Math.max(releaseMinTime, Math.min(releaseMaxTime,
-          ((x - sustainX) / (graphWidth * 0.2)) * releaseMaxTime
-        ))
+        // Release time - X-only movement - allow extending beyond current bounds
+        const releaseStartTime = settings.attack + settings.decay + settings.sustainDuration
+        const releaseTime = Math.max(releaseMinTime, 
+          Math.min(releaseMaxTime * 3, timeAtMouseX - releaseStartTime) // Allow up to 3x the normal max
+        )
         newSettings.release = releaseTime
         break
     }
@@ -213,6 +229,19 @@ export function GraphicalADSR({
     })
   }, [])
 
+  // Add document-level event listeners when dragging
+  useEffect(() => {
+    if (dragState.isDragging) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [dragState.isDragging, handleMouseMove, handleMouseUp])
+
   return (
     <Box style={{ userSelect: 'none' }}>
       <Box
@@ -226,29 +255,37 @@ export function GraphicalADSR({
         <svg
           ref={svgRef}
           width={width}
-          height={height + textSpace}
+          height={height + 20}
           style={{ 
             cursor: dragState.isDragging ? 'grabbing' : 'default',
             userSelect: 'none'
           }}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
         >
           {/* Grid lines */}
           <g>
-            {/* Vertical grid lines */}
-            {Array.from({ length: 9 }, (_, i) => (
-              <line
-                key={`v-${i}`}
-                x1={padding + i * gridSpacingX}
-                y1={topPadding}
-                x2={padding + i * gridSpacingX}
-                y2={topPadding + graphHeight}
-                stroke={isDark ? gridConfig.stroke.dark : gridConfig.stroke.light}
-                strokeWidth={gridConfig.stroke.width}
-                opacity={gridConfig.stroke.opacity}
-              />
+            {/* Time-based vertical grid lines */}
+            {Array.from({ length: Math.ceil(actualTotalDuration) + 1 }, (_, i) => (
+              <g key={`time-${i}`}>
+                <line
+                  x1={padding + (i / actualTotalDuration) * graphWidth}
+                  y1={topPadding}
+                  x2={padding + (i / actualTotalDuration) * graphWidth}
+                  y2={topPadding + graphHeight}
+                  stroke={isDark ? gridConfig.stroke.dark : gridConfig.stroke.light}
+                  strokeWidth={gridConfig.stroke.width}
+                  opacity={gridConfig.stroke.opacity}
+                />
+                {/* Time labels */}
+                <text
+                  x={padding + (i / actualTotalDuration) * graphWidth}
+                  y={topPadding + graphHeight + 15}
+                  textAnchor="middle"
+                  fontSize="10"
+                  fill={isDark ? gridConfig.text.dark : gridConfig.text.light}
+                >
+                  {i}s
+                </text>
+              </g>
             ))}
             {/* Horizontal grid lines */}
             {Array.from({ length: 7 }, (_, i) => (
@@ -345,17 +382,6 @@ export function GraphicalADSR({
             )
           })}
           
-          {/* Total ADSR duration below R point */}
-          <text
-            x={releaseX}
-            y={topPadding + graphHeight + 20}
-            textAnchor="middle"
-            fontSize="10"
-            fontWeight="500"
-            fill={isDark ? gridConfig.text.dark : gridConfig.text.light}
-          >
-            {(settings.attack + settings.decay + settings.sustainDuration + settings.release).toFixed(2)}s
-          </text>
           
         </svg>
       </Box>

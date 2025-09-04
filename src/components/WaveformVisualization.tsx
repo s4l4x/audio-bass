@@ -6,13 +6,15 @@ interface WaveformVisualizationProps {
   width?: number
   height?: number
   isGenerating?: boolean
+  totalDuration?: number
 }
 
 export function WaveformVisualization({
   getWaveformData,
   width = 400,
   height = 120,
-  isGenerating = false
+  isGenerating = false,
+  totalDuration = 5.0
 }: WaveformVisualizationProps) {
   const theme = useMantineTheme()
   const computedColorScheme = useComputedColorScheme('light')
@@ -37,12 +39,15 @@ export function WaveformVisualization({
 
     setLastDataLength(waveformData.length)
 
-    // Convert waveform data to SVG path
+    // Convert waveform data to SVG path with time-based positioning
     const centerY = padding + graphHeight / 2
     const pathCommands: string[] = []
 
     for (let i = 0; i < waveformData.length; i++) {
-      const x = padding + (i / (waveformData.length - 1)) * graphWidth
+      // Position based on actual time rather than sample index
+      const timeRatio = i / (waveformData.length - 1) // 0 to 1
+      const actualTime = timeRatio * totalDuration // 0 to totalDuration seconds
+      const x = padding + (actualTime / totalDuration) * graphWidth
       const y = centerY - (waveformData[i] * graphHeight * 0.4) // Scale amplitude
       
       if (i === 0) {
@@ -83,7 +88,7 @@ export function WaveformVisualization({
     >
       <svg
         width={width}
-        height={height}
+        height={height + 20}
         style={{
           userSelect: 'none'
         }}
@@ -102,18 +107,29 @@ export function WaveformVisualization({
             opacity="0.5"
           />
           
-          {/* Vertical grid lines */}
-          {Array.from({ length: 5 }, (_, i) => (
-            <line
-              key={`v-${i}`}
-              x1={padding + (i * graphWidth) / 4}
-              y1={padding}
-              x2={padding + (i * graphWidth) / 4}
-              y2={padding + graphHeight}
-              stroke={isDark ? gridConfig.stroke.dark : gridConfig.stroke.light}
-              strokeWidth={gridConfig.stroke.width}
-              opacity={gridConfig.stroke.opacity}
-            />
+          {/* Time-based vertical grid lines */}
+          {Array.from({ length: Math.ceil(totalDuration) + 1 }, (_, i) => (
+            <g key={`time-${i}`}>
+              <line
+                x1={padding + (i / totalDuration) * graphWidth}
+                y1={padding}
+                x2={padding + (i / totalDuration) * graphWidth}
+                y2={padding + graphHeight}
+                stroke={isDark ? gridConfig.stroke.dark : gridConfig.stroke.light}
+                strokeWidth={gridConfig.stroke.width}
+                opacity={gridConfig.stroke.opacity}
+              />
+              {/* Time labels */}
+              <text
+                x={padding + (i / totalDuration) * graphWidth}
+                y={padding + graphHeight + 15}
+                textAnchor="middle"
+                fontSize="10"
+                fill={isDark ? gridConfig.text.dark : gridConfig.text.light}
+              >
+                {i}s
+              </text>
+            </g>
           ))}
         </g>
 

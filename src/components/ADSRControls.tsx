@@ -6,12 +6,14 @@ import type { UseADSROptions, ADSRSettings } from '../hooks/useADSR'
 interface ADSRControlsProps extends UseADSROptions {
   onSettingsChange?: (settings: ADSRSettings) => void
   label?: string
+  totalDuration?: number
 }
 
 export function ADSRControls({ 
   onSettingsChange, 
   label = "",
   initialSettings,
+  totalDuration,
   ...adsrOptions 
 }: ADSRControlsProps) {
   // Use the initialSettings directly if provided, otherwise use useADSR
@@ -52,6 +54,7 @@ export function ADSRControls({
         settings={currentSettings}
         onSettingsChange={handleGraphicalChange}
         ranges={ranges}
+        totalDuration={totalDuration}
       />
     </Stack>
   )

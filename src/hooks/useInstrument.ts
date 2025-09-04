@@ -41,7 +41,7 @@ const getDefaultSettings = (type: InstrumentType): InstrumentSettings => {
         ...baseSettings,
         frequency: 440,
         envelope: { 
-          attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0,
+          attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0, sustainDuration: 1.0,
           attackCurve: 'exponential', decayCurve: 'exponential', releaseCurve: 'exponential'
         },
         oscillatorType: 'sine'
@@ -127,9 +127,21 @@ export function useInstrument(initialType: InstrumentType) {
   const lastRecordingRef = useRef<AudioBuffer | null>(null)
   const [waveformDataVersion, setWaveformDataVersion] = useState(0)
 
+  // Helper function to calculate total ADSR duration
+  const calculateADSRDuration = (envelope: ADSRSettings): number => {
+    return envelope.attack + envelope.decay + envelope.sustainDuration + envelope.release
+  }
+
   // Generic waveform generation for both instrument types
   const generateWaveform = async (type: InstrumentType, settings: InstrumentSettings) => {
     try {
+      // Calculate buffer duration based on instrument type
+      let bufferDuration = 1.0 // Default for membrane synth
+      if (type === 'synth') {
+        const synthSettings = settings as SynthSettings
+        bufferDuration = calculateADSRDuration(synthSettings.envelope) + 0.1 // Add small buffer
+      }
+      
       const buffer = await Tone.Offline((context) => {
         if (type === 'membraneSynth') {
           const membraneSettings = settings as MembraneSynthSettings
@@ -153,6 +165,14 @@ export function useInstrument(initialType: InstrumentType) {
           synth.triggerAttackRelease('C2', '8n')
         } else if (type === 'synth') {
           const synthSettings = settings as SynthSettings
+          console.log('🎛️ Creating Tone.Synth with envelope:', {
+            attack: synthSettings.envelope.attack,
+            decay: synthSettings.envelope.decay,
+            sustain: synthSettings.envelope.sustain,
+            release: synthSettings.envelope.release,
+            sustainDuration: synthSettings.envelope.sustainDuration
+          })
+          
           const synth = new Tone.Synth({
             oscillator: { type: synthSettings.oscillatorType },
             envelope: {
@@ -168,9 +188,13 @@ export function useInstrument(initialType: InstrumentType) {
           })
           
           synth.connect(context.destination)
-          synth.triggerAttackRelease(synthSettings.frequency, '2n')
+          // For triggerAttackRelease, the duration should only be the sustain duration
+          // The attack, decay, and release are handled by the envelope itself
+          const noteDuration = synthSettings.envelope.sustainDuration
+          console.log('🎵 Triggering synth with frequency:', synthSettings.frequency, 'note duration:', noteDuration)
+          synth.triggerAttackRelease(synthSettings.frequency, noteDuration)
         }
-      }, 1.0)
+      }, bufferDuration)
       
       lastRecordingRef.current = buffer
       setWaveformDataVersion(prev => prev + 1)
@@ -341,10 +365,12 @@ export function useInstrument(initialType: InstrumentType) {
 
   const getWaveformData = useCallback((): Float32Array | null => {
     if (lastRecordingRef.current) {
-      // Return the actual audio waveform data from the recording
       const channelData = lastRecordingRef.current.getChannelData(0) // Get mono channel
-      // Downsample for visualization (every 100th sample for ~4000 samples -> 40 points)
-      const downsampleRate = Math.max(1, Math.floor(channelData.length / 1000))
+      
+      // Use consistent downsampling for both instrument types to show actual waveform
+      // Adjust sample rate to show more detail while keeping visualization smooth
+      const targetPoints = 2000 // More points to show waveform detail with ADSR
+      const downsampleRate = Math.max(1, Math.floor(channelData.length / targetPoints))
       const downsampled = new Float32Array(Math.ceil(channelData.length / downsampleRate))
       
       for (let i = 0; i < downsampled.length; i++) {

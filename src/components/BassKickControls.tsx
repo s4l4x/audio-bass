@@ -53,6 +53,7 @@ export function BassKickControls({
 
       <WaveformVisualization
         getWaveformData={getWaveformData}
+        totalDuration={settings.envelope.attack + settings.envelope.decay + settings.envelope.sustainDuration + settings.envelope.release}
       />
 
       <div>
@@ -124,6 +125,7 @@ export function BassKickControls({
           release: [0.001, 3.0]
         }}
         onSettingsChange={handleADSRChange}
+        totalDuration={settings.envelope.attack + settings.envelope.decay + settings.envelope.sustainDuration + settings.envelope.release}
       />
     </Stack>
   )
