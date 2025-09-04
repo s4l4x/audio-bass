@@ -14,7 +14,9 @@ export function WaveformVisualization({
   height = 120,
   isGenerating = false
 }: WaveformVisualizationProps) {
+  const theme = useMantineTheme()
   const computedColorScheme = useComputedColorScheme('light')
+  const gridConfig = theme.other.graphGrid
   const isDark = computedColorScheme === 'dark'
   const [waveformPath, setWaveformPath] = useState('')
   const [lastDataLength, setLastDataLength] = useState(0)
@@ -94,8 +96,8 @@ export function WaveformVisualization({
             y1={padding + graphHeight / 2}
             x2={padding + graphWidth}
             y2={padding + graphHeight / 2}
-            stroke={isDark ? 'var(--mantine-color-dark-4)' : 'var(--mantine-color-gray-2)'}
-            strokeWidth="1"
+            stroke={isDark ? gridConfig.stroke.dark : gridConfig.stroke.light}
+            strokeWidth={gridConfig.stroke.width}
             strokeDasharray="2,2"
             opacity="0.5"
           />
@@ -108,9 +110,9 @@ export function WaveformVisualization({
               y1={padding}
               x2={padding + (i * graphWidth) / 4}
               y2={padding + graphHeight}
-              stroke={isDark ? 'var(--mantine-color-dark-4)' : 'var(--mantine-color-gray-2)'}
-              strokeWidth="1"
-              opacity="0.3"
+              stroke={isDark ? gridConfig.stroke.dark : gridConfig.stroke.light}
+              strokeWidth={gridConfig.stroke.width}
+              opacity={gridConfig.stroke.opacity}
             />
           ))}
         </g>
@@ -134,7 +136,7 @@ export function WaveformVisualization({
             y={height / 2}
             textAnchor="middle"
             fontSize="12"
-            fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '2' : '6'})`}
+            fill={isDark ? gridConfig.text.dark : gridConfig.text.light}
             opacity="0.7"
           >
             Updating...

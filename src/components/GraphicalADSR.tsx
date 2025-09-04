@@ -33,7 +33,9 @@ export function GraphicalADSR({
   const textSpace = 15 // Extra space for the total duration text
   const theme = useMantineTheme();
   const computedColorScheme = useComputedColorScheme('light');
-  const colors = theme.other.adsrColors;
+  const colors = theme.other.adsr.colors;
+  const gridConfig = theme.other.graphGrid;
+  const thumbConfig = theme.other.adsr.thumb;
   const isDark = computedColorScheme === 'dark';
   const svgRef = useRef<SVGSVGElement>(null)
   const [dragState, setDragState] = useState<{
@@ -243,8 +245,9 @@ export function GraphicalADSR({
                 y1={topPadding}
                 x2={padding + i * gridSpacingX}
                 y2={topPadding + graphHeight}
-                stroke={isDark ? 'var(--mantine-color-dark-4)' : 'var(--mantine-color-gray-2)'}
-                strokeWidth="1"
+                stroke={isDark ? gridConfig.stroke.dark : gridConfig.stroke.light}
+                strokeWidth={gridConfig.stroke.width}
+                opacity={gridConfig.stroke.opacity}
               />
             ))}
             {/* Horizontal grid lines */}
@@ -255,8 +258,9 @@ export function GraphicalADSR({
                 y1={topPadding + i * gridSpacingY}
                 x2={padding + graphWidth}
                 y2={topPadding + i * gridSpacingY}
-                stroke={isDark ? 'var(--mantine-color-dark-4)' : 'var(--mantine-color-gray-2)'}
-                strokeWidth="1"
+                stroke={isDark ? gridConfig.stroke.dark : gridConfig.stroke.light}
+                strokeWidth={gridConfig.stroke.width}
+                opacity={gridConfig.stroke.opacity}
               />
             ))}
           </g>
@@ -317,7 +321,7 @@ export function GraphicalADSR({
                 <circle
                   cx={point.x}
                   cy={point.y}
-                  r={dragState.dragId === point.id ? 9 : 8}
+                  r={dragState.dragId === point.id ? thumbConfig.sizeActive : thumbConfig.size}
                   fill={colors[point.id]}
                   style={{ 
                     cursor: dragState.dragId === point.id ? 'grabbing' : cursors[point.id],
@@ -332,7 +336,7 @@ export function GraphicalADSR({
                   textAnchor="middle"
                   fontSize="12"
                   fontWeight="600"
-                  fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '1' : '7'})`}
+                  fill={isDark ? gridConfig.text.dark : gridConfig.text.light}
                   pointerEvents="none"
                 >
                   {point.id.charAt(0).toUpperCase()}
@@ -348,7 +352,7 @@ export function GraphicalADSR({
             textAnchor="middle"
             fontSize="10"
             fontWeight="500"
-            fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '2' : '6'})`}
+            fill={isDark ? gridConfig.text.dark : gridConfig.text.light}
           >
             {(settings.attack + settings.decay + settings.sustainDuration + settings.release).toFixed(2)}s
           </text>
