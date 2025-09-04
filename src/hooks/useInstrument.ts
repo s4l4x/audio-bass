@@ -308,8 +308,12 @@ export function useInstrument(initialType: InstrumentType) {
     }
 
     if (config.type === 'membraneSynth') {
+      // Set playing state for visual feedback
+      setIsPlaying(true)
       // Just play the sound - no waveform recording since we have real-time generation
       ;(instrumentRef.current as Tone.MembraneSynth).triggerAttackRelease('C2', duration)
+      // Reset playing state after a brief moment
+      setTimeout(() => setIsPlaying(false), 150)
     } else {
       const frequency = note || (config.settings as SynthSettings).frequency || 440
       ;(instrumentRef.current as Tone.Synth).triggerAttackRelease(frequency, duration)

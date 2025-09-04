@@ -26,13 +26,15 @@ export function SynthControls({
     <Stack gap="lg">
       <Group justify="center">
         <Button 
-          size="lg" 
+          w={80}
+          h={80}
           onMouseDown={() => onPlay()}
           onMouseUp={() => onStop()}
           onMouseLeave={() => onStop()}
           variant={isPlaying ? "filled" : "outline"}
+          style={{ outline: 'none' }}
         >
-          Hold to Play
+          PRESS
         </Button>
       </Group>
 

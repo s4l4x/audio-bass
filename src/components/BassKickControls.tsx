@@ -6,6 +6,7 @@ import type { ADSRSettings } from '../hooks/useADSR'
 
 interface BassKickControlsProps {
   settings: MembraneSynthSettings
+  isPlaying: boolean
   onSettingsChange: (settings: Partial<MembraneSynthSettings>) => void
   onTrigger: () => void
   getWaveformData: () => Float32Array | null
@@ -13,6 +14,7 @@ interface BassKickControlsProps {
 
 export function BassKickControls({ 
   settings, 
+  isPlaying,
   onSettingsChange, 
   onTrigger,
   getWaveformData
@@ -25,12 +27,14 @@ export function BassKickControls({
     <Stack gap="lg">
       <Group justify="center">
         <Button 
-          size="xl" 
+          w={80}
+          h={80}
           onClick={onTrigger}
-          variant="filled"
+          variant={isPlaying ? "filled" : "outline"}
           color="red"
+          style={{ outline: 'none' }}
         >
-          🥁 Kick
+          TAP
         </Button>
       </Group>
 

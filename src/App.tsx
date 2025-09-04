@@ -39,6 +39,7 @@ function App() {
         return (
           <BassKickControls
             settings={config.settings as MembraneSynthSettings}
+            isPlaying={isPlaying}
             onSettingsChange={updateSettings}
             onTrigger={() => triggerAttackRelease()}
             getWaveformData={getWaveformData}
