@@ -1,4 +1,4 @@
-import { SegmentedControl, useMantineColorScheme, Group, Center, Box } from '@mantine/core';
+import { SegmentedControl, useMantineColorScheme, Group, Center } from '@mantine/core';
 import { IconSun, IconMoon, IconDeviceDesktop } from '@tabler/icons-react';
 
 export function AppearanceControls() {

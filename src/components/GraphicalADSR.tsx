@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { Box, Text, Group, useMantineTheme } from '@mantine/core'
+import { Box, Text, Group, useMantineTheme, useComputedColorScheme } from '@mantine/core'
 import type { ADSRSettings, CurveType } from '../hooks/useADSR'
 
 interface GraphicalADSRProps {
@@ -23,7 +23,9 @@ export function GraphicalADSR({
   height = 200 
 }: GraphicalADSRProps) {
   const theme = useMantineTheme();
+  const computedColorScheme = useComputedColorScheme('light');
   const colors = theme.other.adsrColors;
+  const isDark = computedColorScheme === 'dark';
   const svgRef = useRef<SVGSVGElement>(null)
   const [dragState, setDragState] = useState<{
     isDragging: boolean
@@ -170,10 +172,10 @@ export function GraphicalADSR({
     <Box style={{ userSelect: 'none' }}>
       <Box
         style={{ 
-          border: '1px solid var(--mantine-color-gray-3)',
+          border: `1px solid var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '4' : '3'})`,
           borderRadius: '8px',
           padding: '8px',
-          backgroundColor: 'var(--mantine-color-gray-0)'
+          backgroundColor: `var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '6' : '0'})`
         }}
       >
         <svg
@@ -191,7 +193,12 @@ export function GraphicalADSR({
           {/* Grid lines */}
           <defs>
             <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e9ecef" strokeWidth="1"/>
+              <path 
+                d="M 40 0 L 0 0 0 40" 
+                fill="none" 
+                stroke={isDark ? 'var(--mantine-color-dark-4)' : 'var(--mantine-color-gray-2)'} 
+                strokeWidth="1"
+              />
             </pattern>
           </defs>
           <rect width={width} height={height} fill="url(#grid)" />
@@ -205,7 +212,7 @@ export function GraphicalADSR({
                   y1={controlPoints.find(p => p.id === dragState.dragId)?.y}
                   x2={width - padding}
                   y2={controlPoints.find(p => p.id === dragState.dragId)?.y}
-                  stroke="#868e96"
+                  stroke={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '3' : '6'})`}
                   strokeWidth="1"
                   strokeDasharray="3,3"
                   opacity="0.5"
@@ -217,7 +224,7 @@ export function GraphicalADSR({
                   y1={padding}
                   x2={controlPoints.find(p => p.id === 'sustain')?.x}
                   y2={height - padding}
-                  stroke="#868e96"
+                  stroke={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '3' : '6'})`}
                   strokeWidth="1"
                   strokeDasharray="3,3"
                   opacity="0.5"
@@ -283,7 +290,7 @@ export function GraphicalADSR({
                   cy={point.y}
                   r="10"
                   fill={colors[point.id]}
-                  stroke="white"
+                  stroke={`var(--mantine-color-${isDark ? 'dark' : 'white'})`}
                   strokeWidth="3"
                   style={{ 
                     cursor: dragState.dragId === point.id ? 'grabbing' : cursors[point.id]
@@ -297,7 +304,7 @@ export function GraphicalADSR({
                   textAnchor="middle"
                   fontSize="12"
                   fontWeight="600"
-                  fill="#495057"
+                  fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '1' : '7'})`}
                   pointerEvents="none"
                 >
                   {point.id.charAt(0).toUpperCase()}
@@ -308,10 +315,10 @@ export function GraphicalADSR({
           
           
           {/* Labels */}
-          <text x={padding} y={height - 5} fontSize="10" fill="#868e96">0</text>
-          <text x={width - padding} y={height - 5} fontSize="10" fill="#868e96">Time</text>
-          <text x={5} y={padding + 5} fontSize="10" fill="#868e96">1</text>
-          <text x={5} y={height - padding} fontSize="10" fill="#868e96">0</text>
+          <text x={padding} y={height - 5} fontSize="10" fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '2' : '6'})`}>0</text>
+          <text x={width - padding} y={height - 5} fontSize="10" fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '2' : '6'})`}>Time</text>
+          <text x={5} y={padding + 5} fontSize="10" fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '2' : '6'})`}>1</text>
+          <text x={5} y={height - padding} fontSize="10" fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '2' : '6'})`}>0</text>
         </svg>
       </Box>
       
