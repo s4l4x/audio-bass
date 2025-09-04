@@ -24,9 +24,9 @@ export function BassKickControls({
   }
 
   return (
-    <Stack gap="lg">
+    <Stack gap="md">
       <Group justify="space-between" align="center">
-        <Title order={3} size="lg" fw="500">Bass Kick</Title>
+        <Title order={4} size="md" fw="500">Bass Kick</Title>
         <Button 
           w={30}
           h={30}
@@ -52,7 +52,7 @@ export function BassKickControls({
       </Group>
 
       <div>
-        <Text size="sm" mb="xs">
+        <Text size="xs" mb="4px">
           Volume: {settings.volume} dB
         </Text>
         <Slider
@@ -61,11 +61,12 @@ export function BassKickControls({
           min={-30}
           max={6}
           step={1}
+          size="sm"
         />
       </div>
 
       <div>
-        <Text size="sm" mb="xs">
+        <Text size="xs" mb="4px">
           Pitch Decay: {settings.pitchDecay.toFixed(3)}s
         </Text>
         <Slider
@@ -74,11 +75,12 @@ export function BassKickControls({
           min={0.001}
           max={0.5}
           step={0.001}
+          size="sm"
         />
       </div>
 
       <div>
-        <Text size="sm" mb="xs">
+        <Text size="xs" mb="4px">
           Octaves: {settings.octaves}
         </Text>
         <Slider
@@ -87,11 +89,12 @@ export function BassKickControls({
           min={1}
           max={20}
           step={1}
+          size="sm"
         />
       </div>
 
       <div>
-        <Text size="sm" mb="xs">
+        <Text size="xs" mb="4px">
           Oscillator Type
         </Text>
         <Select
@@ -103,6 +106,7 @@ export function BassKickControls({
             { value: 'sawtooth', label: 'Sawtooth' },
             { value: 'triangle', label: 'Triangle' }
           ]}
+          size="xs"
         />
       </div>
 

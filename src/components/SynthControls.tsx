@@ -23,9 +23,9 @@ export function SynthControls({
   }
 
   return (
-    <Stack gap="lg">
+    <Stack gap="md">
       <Group justify="space-between" align="center">
-        <Title order={3} size="lg">Synthesizer</Title>
+        <Title order={4} size="md" fw="500">Synthesizer</Title>
         <Button 
           w={30}
           h={30}
@@ -52,7 +52,7 @@ export function SynthControls({
       </Group>
 
       <div>
-        <Text size="sm" mb="xs">
+        <Text size="xs" mb="4px">
           Frequency: {settings.frequency} Hz
         </Text>
         <Slider
@@ -61,11 +61,12 @@ export function SynthControls({
           min={200}
           max={800}
           step={1}
+          size="sm"
         />
       </div>
 
       <div>
-        <Text size="sm" mb="xs">
+        <Text size="xs" mb="4px">
           Volume: {settings.volume} dB
         </Text>
         <Slider
@@ -74,11 +75,12 @@ export function SynthControls({
           min={-30}
           max={6}
           step={1}
+          size="sm"
         />
       </div>
 
       <div>
-        <Text size="sm" mb="xs">
+        <Text size="xs" mb="4px">
           Oscillator Type
         </Text>
         <Select
@@ -90,6 +92,7 @@ export function SynthControls({
             { value: 'sawtooth', label: 'Sawtooth' },
             { value: 'triangle', label: 'Triangle' }
           ]}
+          size="xs"
         />
       </div>
 
