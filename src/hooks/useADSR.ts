@@ -6,6 +6,7 @@ export interface ADSRSettings {
   attack: number
   decay: number
   sustain: number
+  sustainDuration: number
   release: number
   attackCurve: CurveType
   decayCurve: CurveType
@@ -18,6 +19,7 @@ export interface UseADSROptions {
     attack?: [number, number]
     decay?: [number, number]
     sustain?: [number, number]
+    sustainDuration?: [number, number]
     release?: [number, number]
   }
 }
@@ -26,6 +28,7 @@ const DEFAULT_SETTINGS: ADSRSettings = {
   attack: 0.01,
   decay: 0.3,
   sustain: 0.3,
+  sustainDuration: 1.0,
   release: 1.0,
   attackCurve: 'exponential',
   decayCurve: 'exponential', 
@@ -36,6 +39,7 @@ const DEFAULT_RANGES = {
   attack: [0.001, 2.0] as [number, number],
   decay: [0.001, 2.0] as [number, number],
   sustain: [0.0, 1.0] as [number, number],
+  sustainDuration: [0.1, 3.0] as [number, number],
   release: [0.001, 5.0] as [number, number]
 }
 

@@ -15,7 +15,7 @@ export function ADSRControls({
   ...adsrOptions 
 }: ADSRControlsProps) {
   // Use the initialSettings directly if provided, otherwise use useADSR
-  const { settings: defaultSettings } = useADSR(adsrOptions)
+  const { settings: defaultSettings, ranges } = useADSR(adsrOptions)
   const currentSettings = initialSettings ? { ...defaultSettings, ...initialSettings } : defaultSettings
 
   const handleGraphicalChange = (newSettings: ADSRSettings) => {
@@ -27,6 +27,7 @@ export function ADSRControls({
       attack: 0.01,
       decay: 0.3,
       sustain: 0.3,
+      sustainDuration: 1.0,
       release: 1.0,
       attackCurve: 'exponential',
       decayCurve: 'exponential',
@@ -41,16 +42,16 @@ export function ADSRControls({
           <Text size="md" fw={500}>
             {label}
           </Text>
-          <Button size="xs" variant="light" onClick={resetToDefaults}>
+          <Button size="xs" variant="subtle" onClick={resetToDefaults}>
             Reset
           </Button>
         </Group>
       )}
 
-      {/* Always Visual ADSR */}
       <GraphicalADSR
         settings={currentSettings}
         onSettingsChange={handleGraphicalChange}
+        ranges={ranges}
       />
     </Stack>
   )

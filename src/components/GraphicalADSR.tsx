@@ -1,10 +1,17 @@
 import { useState, useRef, useCallback } from 'react'
-import { Box, Text, Group, useMantineTheme, useComputedColorScheme } from '@mantine/core'
+import { Box, useMantineTheme, useComputedColorScheme } from '@mantine/core'
 import type { ADSRSettings, CurveType } from '../hooks/useADSR'
 
 interface GraphicalADSRProps {
   settings: ADSRSettings
   onSettingsChange: (settings: ADSRSettings) => void
+  ranges?: {
+    attack?: [number, number]
+    decay?: [number, number]
+    sustain?: [number, number]
+    sustainDuration?: [number, number]
+    release?: [number, number]
+  }
   width?: number
   height?: number
 }
@@ -19,9 +26,11 @@ interface ControlPoint {
 export function GraphicalADSR({ 
   settings, 
   onSettingsChange,
+  ranges,
   width = 400,
   height = 200 
 }: GraphicalADSRProps) {
+  const textSpace = 15 // Extra space for the total duration text
   const theme = useMantineTheme();
   const computedColorScheme = useComputedColorScheme('light');
   const colors = theme.other.adsrColors;
@@ -38,20 +47,42 @@ export function GraphicalADSR({
   })
 
   // Convert ADSR values to SVG coordinates
-  const padding = 25
+  const labelHeight = 20  // Space needed for labels above control points
+  const padding = 15
+  const topPadding = padding + labelHeight
   const graphWidth = width - padding * 2
-  const graphHeight = height - padding * 2
+  const graphHeight = height - topPadding - padding
+  const gridSpacingX = graphWidth / 8  // 8 vertical divisions
+  const gridSpacingY = graphHeight / 6 // 6 horizontal divisions
 
-  // Fixed proportional layout for consistent interaction
-  const attackX = padding + (settings.attack / 2.0) * (graphWidth * 0.25) // 25% of width for attack
-  const decayX = attackX + (settings.decay / 2.0) * (graphWidth * 0.25)   // 25% of width for decay  
-  const sustainX = padding + graphWidth * 0.5                               // Fixed at 50% for sustain display
-  const releaseX = sustainX + (settings.release / 5.0) * (graphWidth * 0.5) // 50% of width for release
+  // Use flexible ranges with defaults
+  const defaultRanges = {
+    attack: [0.001, 2.0] as [number, number],
+    decay: [0.001, 2.0] as [number, number],
+    sustain: [0.0, 1.0] as [number, number],
+    sustainDuration: [0.1, 3.0] as [number, number],
+    release: [0.001, 5.0] as [number, number]
+  }
+  
+  const actualRanges = {
+    ...defaultRanges,
+    ...ranges
+  }
+  
+  const [attackMinTime, attackMaxTime] = actualRanges.attack
+  const [decayMinTime, decayMaxTime] = actualRanges.decay
+  const [sustainMinDuration, sustainMaxDuration] = actualRanges.sustainDuration
+  const [releaseMinTime, releaseMaxTime] = actualRanges.release
+  
+  const attackX = padding + (settings.attack / attackMaxTime) * (graphWidth * 0.2) // 20% of width for attack
+  const decayX = attackX + (settings.decay / decayMaxTime) * (graphWidth * 0.2)   // 20% of width for decay  
+  const sustainX = decayX + (settings.sustainDuration / sustainMaxDuration) * (graphWidth * 0.4)  // 40% of width for sustain
+  const releaseX = sustainX + (settings.release / releaseMaxTime) * (graphWidth * 0.2) // 20% of width for release
 
   // Y positions (inverted because SVG y increases downward)
-  const topY = padding
-  const sustainY = padding + (1 - settings.sustain) * graphHeight
-  const bottomY = padding + graphHeight
+  const topY = topPadding
+  const sustainY = topPadding + (1 - settings.sustain) * graphHeight
+  const bottomY = topPadding + graphHeight
 
   // Control points
   const controlPoints: ControlPoint[] = [
@@ -126,39 +157,51 @@ export function GraphicalADSR({
     switch (dragState.dragId) {
       case 'attack':
         // Attack time - X-only movement
-        const attackTime = Math.max(0.001, Math.min(2.0, 
-          ((x - padding) / (graphWidth * 0.25)) * 2.0
+        const attackTime = Math.max(attackMinTime, Math.min(attackMaxTime, 
+          ((x - padding) / (graphWidth * 0.2)) * attackMaxTime
         ))
         newSettings.attack = attackTime
         break
         
       case 'decay':
-        // Decay time - X-only movement
-        const decayTime = Math.max(0.001, Math.min(2.0,
-          ((x - attackX) / (graphWidth * 0.25)) * 2.0
+        // Decay time - X movement for duration
+        const decayTime = Math.max(decayMinTime, Math.min(decayMaxTime,
+          ((x - attackX) / (graphWidth * 0.2)) * decayMaxTime
         ))
         newSettings.decay = decayTime
+        
+        // Sustain level - Y movement (decay endpoint determines sustain level)
+        const decaySustainLevel = Math.max(0, Math.min(1,
+          1 - ((y - topPadding) / graphHeight)
+        ))
+        newSettings.sustain = decaySustainLevel
         break
         
       case 'sustain':
-        // Sustain level - Y-only movement
-        const sustainLevel = Math.max(0, Math.min(1,
-          1 - ((y - padding) / graphHeight)
+        // Sustain level - Y movement for level
+        const sustainPointLevel = Math.max(0, Math.min(1,
+          1 - ((y - topPadding) / graphHeight)
         ))
-        newSettings.sustain = sustainLevel
+        newSettings.sustain = sustainPointLevel
+        
+        // Sustain duration - X movement for duration
+        const sustainDurationTime = Math.max(sustainMinDuration, Math.min(sustainMaxDuration,
+          ((x - decayX) / (graphWidth * 0.4)) * sustainMaxDuration
+        ))
+        newSettings.sustainDuration = sustainDurationTime
         break
         
       case 'release':
         // Release time - X-only movement, independent calculation
-        const releaseTime = Math.max(0.001, Math.min(5.0,
-          ((x - sustainX) / (graphWidth * 0.5)) * 5.0
+        const releaseTime = Math.max(releaseMinTime, Math.min(releaseMaxTime,
+          ((x - sustainX) / (graphWidth * 0.2)) * releaseMaxTime
         ))
         newSettings.release = releaseTime
         break
     }
     
     onSettingsChange(newSettings)
-  }, [dragState, settings, onSettingsChange, attackX, sustainX, graphWidth, graphHeight, padding])
+  }, [dragState, settings, onSettingsChange, attackX, sustainX, decayX, graphWidth, graphHeight, padding, topPadding, attackMinTime, attackMaxTime, decayMinTime, decayMaxTime, sustainMinDuration, sustainMaxDuration, releaseMinTime, releaseMaxTime])
 
   const handleMouseUp = useCallback(() => {
     setDragState({
@@ -181,7 +224,7 @@ export function GraphicalADSR({
         <svg
           ref={svgRef}
           width={width}
-          height={height}
+          height={height + textSpace}
           style={{ 
             cursor: dragState.isDragging ? 'grabbing' : 'default',
             userSelect: 'none'
@@ -191,17 +234,33 @@ export function GraphicalADSR({
           onMouseLeave={handleMouseUp}
         >
           {/* Grid lines */}
-          <defs>
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path 
-                d="M 40 0 L 0 0 0 40" 
-                fill="none" 
-                stroke={isDark ? 'var(--mantine-color-dark-4)' : 'var(--mantine-color-gray-2)'} 
+          <g>
+            {/* Vertical grid lines */}
+            {Array.from({ length: 9 }, (_, i) => (
+              <line
+                key={`v-${i}`}
+                x1={padding + i * gridSpacingX}
+                y1={topPadding}
+                x2={padding + i * gridSpacingX}
+                y2={topPadding + graphHeight}
+                stroke={isDark ? 'var(--mantine-color-dark-4)' : 'var(--mantine-color-gray-2)'}
                 strokeWidth="1"
               />
-            </pattern>
-          </defs>
-          <rect width={width} height={height} fill="url(#grid)" />
+            ))}
+            {/* Horizontal grid lines */}
+            {Array.from({ length: 7 }, (_, i) => (
+              <line
+                key={`h-${i}`}
+                x1={padding}
+                y1={topPadding + i * gridSpacingY}
+                x2={padding + graphWidth}
+                y2={topPadding + i * gridSpacingY}
+                stroke={isDark ? 'var(--mantine-color-dark-4)' : 'var(--mantine-color-gray-2)'}
+                strokeWidth="1"
+              />
+            ))}
+          </g>
+          
           
           {/* Drag constraint guides */}
           {dragState.isDragging && dragState.dragId && (
@@ -221,9 +280,9 @@ export function GraphicalADSR({
               {dragState.dragId === 'sustain' && (
                 <line
                   x1={controlPoints.find(p => p.id === 'sustain')?.x}
-                  y1={padding}
+                  y1={topPadding}
                   x2={controlPoints.find(p => p.id === 'sustain')?.x}
-                  y2={height - padding}
+                  y2={topPadding + graphHeight}
                   stroke={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '3' : '6'})`}
                   strokeWidth="1"
                   strokeDasharray="3,3"
@@ -239,7 +298,7 @@ export function GraphicalADSR({
             d={generateCurvePath(padding, bottomY, attackX, topY, 'exponential')}
             fill="none"
             stroke={colors.attack}
-            strokeWidth="3"
+            strokeWidth="2"
             strokeLinejoin="round"
             pointerEvents="none"
           />
@@ -249,7 +308,7 @@ export function GraphicalADSR({
             d={generateCurvePath(attackX, topY, decayX, sustainY, 'exponential')}
             fill="none"
             stroke={colors.decay}
-            strokeWidth="3"
+            strokeWidth="2"
             strokeLinejoin="round"
             pointerEvents="none"
           />
@@ -259,7 +318,7 @@ export function GraphicalADSR({
             d={`M ${decayX} ${sustainY} L ${sustainX} ${sustainY}`}
             fill="none"
             stroke={colors.sustain}
-            strokeWidth="3"
+            strokeWidth="2"
             strokeLinejoin="round"
             pointerEvents="none"
           />
@@ -269,7 +328,7 @@ export function GraphicalADSR({
             d={generateCurvePath(sustainX, sustainY, releaseX, bottomY, 'exponential')}
             fill="none"
             stroke={colors.release}
-            strokeWidth="3"
+            strokeWidth="2"
             strokeLinejoin="round"
             pointerEvents="none"
           />
@@ -278,8 +337,8 @@ export function GraphicalADSR({
           {controlPoints.map((point) => {
             const cursors = {
               attack: 'ew-resize',      // horizontal resize for time
-              decay: 'ew-resize',       // horizontal resize for time
-              sustain: 'ns-resize',     // vertical resize for level
+              decay: 'move',            // both horizontal (time) and vertical (sustain level)
+              sustain: 'move',          // both horizontal (duration) and vertical (level)
               release: 'ew-resize'      // horizontal resize for time
             }
             
@@ -313,35 +372,21 @@ export function GraphicalADSR({
             )
           })}
           
+          {/* Total ADSR duration below R point */}
+          <text
+            x={releaseX}
+            y={topPadding + graphHeight + 20}
+            textAnchor="middle"
+            fontSize="10"
+            fontWeight="500"
+            fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '2' : '6'})`}
+          >
+            Total: {(settings.attack + settings.decay + settings.sustainDuration + settings.release).toFixed(2)}s
+          </text>
           
-          {/* Labels */}
-          <text x={padding} y={height - 5} fontSize="10" fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '2' : '6'})`}>0</text>
-          <text x={width - padding} y={height - 5} fontSize="10" fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '2' : '6'})`}>Time</text>
-          <text x={5} y={padding + 5} fontSize="10" fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '2' : '6'})`}>1</text>
-          <text x={5} y={height - padding} fontSize="10" fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '2' : '6'})`}>0</text>
         </svg>
       </Box>
       
-      {/* Current values display with color coding */}
-      <Group gap="lg" mt="xs">
-        <Text size="xs" style={{ color: colors.attack }}>
-          A: {settings.attack.toFixed(3)}s
-        </Text>
-        <Text size="xs" style={{ color: colors.decay }}>
-          D: {settings.decay.toFixed(3)}s
-        </Text>
-        <Text size="xs" style={{ color: colors.sustain }}>
-          S: {settings.sustain.toFixed(2)}
-        </Text>
-        <Text size="xs" style={{ color: colors.release }}>
-          R: {settings.release.toFixed(3)}s
-        </Text>
-      </Group>
-      
-      {/* Interaction hint */}
-      <Text size="xs" c="dimmed" ta="center" mt="xs">
-        Drag points to adjust timing/level
-      </Text>
     </Box>
   )
 }
