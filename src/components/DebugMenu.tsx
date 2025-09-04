@@ -32,7 +32,7 @@ export function DebugMenu() {
         currentTime: context.currentTime.toFixed(3),
         baseLatency: (context as any).baseLatency || 'N/A',
         outputLatency: (context as any).outputLatency || 'N/A',
-        toneVersion: '15.1.22',
+        toneVersion: Tone.version || 'Unknown',
         webAudioSupported: !!(window.AudioContext || (window as any).webkitAudioContext),
         destination: {
           channelCount: Tone.getDestination().channelCount,
