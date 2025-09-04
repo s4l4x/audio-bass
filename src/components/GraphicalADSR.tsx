@@ -288,7 +288,7 @@ export function GraphicalADSR({
                 <circle
                   cx={point.x}
                   cy={point.y}
-                  r="10"
+                  r="8"
                   fill={colors[point.id]}
                   stroke={`var(--mantine-color-${isDark ? 'dark' : 'white'})`}
                   strokeWidth="3"
