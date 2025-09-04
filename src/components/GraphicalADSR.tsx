@@ -347,15 +347,14 @@ export function GraphicalADSR({
                 <circle
                   cx={point.x}
                   cy={point.y}
-                  r="8"
+                  r={dragState.dragId === point.id ? 9 : 8}
                   fill={colors[point.id]}
-                  stroke={`var(--mantine-color-${isDark ? 'dark' : 'white'})`}
-                  strokeWidth="3"
                   style={{ 
-                    cursor: dragState.dragId === point.id ? 'grabbing' : cursors[point.id]
+                    cursor: dragState.dragId === point.id ? 'grabbing' : cursors[point.id],
+                    transition: 'r 150ms ease, opacity 150ms ease'
                   }}
                   onMouseDown={(e) => handleMouseDown(e, point.id)}
-                  opacity={dragState.dragId === point.id ? 0.8 : 1}
+                  opacity={dragState.dragId === point.id ? 0.9 : 1}
                 />
                 <text
                   x={point.x}
