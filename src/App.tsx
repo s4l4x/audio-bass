@@ -19,7 +19,7 @@ function App() {
 
   const instrumentOptions = [
     { value: 'membraneSynth', label: 'Bass Kick' },
-    { value: 'synth', label: 'Synthesizer' }
+    { value: 'synth', label: 'Synth' }
   ]
 
   const renderInstrumentControls = () => {
