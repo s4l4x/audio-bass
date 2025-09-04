@@ -63,7 +63,7 @@ function App() {
       <Center style={{ minHeight: '100vh' }}>
         <Container size="sm">
           <Title order={1} ta="center" mb="xl">
-            Audio Bass - Multi-Instrument Studio
+            Audio Bass
           </Title>
           
           <Select

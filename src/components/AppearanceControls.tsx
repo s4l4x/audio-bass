@@ -5,35 +5,39 @@ export function AppearanceControls() {
   const { setColorScheme, colorScheme } = useMantineColorScheme();
 
   return (
-    <Group justify="center" my="xl">
+    <Group justify="center" grow>
       <SegmentedControl
+        fullWidth
         value={colorScheme}
         onChange={(value) => setColorScheme(value as 'light' | 'dark' | 'auto')}
+        size="xs"
+        transitionDuration={300}
+        transitionTimingFunction="linear"
         data={[
           {
             value: 'light',
             label: (
-              <Center>
-                <IconSun size="1rem" stroke={1.5} />
-                <Box ml={10}>Light</Box>
+              <Center style={{ gap: 10 }}>
+                <IconSun size="0.9rem" stroke={1.5} />
+                <span>Light</span>
               </Center>
             ),
           },
           {
             value: 'dark',
             label: (
-              <Center>
-                <IconMoon size="1rem" stroke={1.5} />
-                <Box ml={10}>Dark</Box>
+              <Center style={{ gap: 10 }}>
+                <IconMoon size="0.9rem" stroke={1.5} />
+                <span>Dark</span>
               </Center>
             ),
           },
           {
             value: 'auto',
             label: (
-              <Center>
-                <IconDeviceDesktop size="1rem" stroke={1.5} />
-                <Box ml={10}>System</Box>
+              <Center style={{ gap: 10 }}>
+                <IconDeviceDesktop size="0.9rem" stroke={1.5} />
+                <span>System</span>
               </Center>
             ),
           },

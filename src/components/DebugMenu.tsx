@@ -1,5 +1,5 @@
-import { Menu, ActionIcon, Modal, Text, Code } from '@mantine/core'
-import { IconDots, IconBug, IconTestPipe, IconPalette } from '@tabler/icons-react'
+import { Menu, ActionIcon, Modal, Code } from '@mantine/core'
+import { IconDots, IconBug, IconTestPipe } from '@tabler/icons-react'
 import { useDisclosure } from '@mantine/hooks'
 import { useState } from 'react'
 import * as Tone from 'tone'
@@ -8,7 +8,6 @@ import { AppearanceControls } from './AppearanceControls'
 export function DebugMenu() {
   const [debugInfo, setDebugInfo] = useState<string>('')
   const [debugModalOpened, { open: openDebugModal, close: closeDebugModal }] = useDisclosure(false)
-  const [appearanceModalOpened, { open: openAppearanceModal, close: closeAppearanceModal }] = useDisclosure(false)
   const [isTestPlaying, setIsTestPlaying] = useState(false)
   const [audioStatus, setAudioStatus] = useState<string>('')
 
@@ -31,8 +30,8 @@ export function DebugMenu() {
         audioContextState: context.state,
         sampleRate: context.sampleRate,
         currentTime: context.currentTime.toFixed(3),
-        baseLatency: context.baseLatency || 'N/A',
-        outputLatency: context.outputLatency || 'N/A',
+        baseLatency: (context as any).baseLatency || 'N/A',
+        outputLatency: (context as any).outputLatency || 'N/A',
         toneVersion: '15.1.22',
         webAudioSupported: !!(window.AudioContext || (window as any).webkitAudioContext),
         destination: {
@@ -92,11 +91,19 @@ export function DebugMenu() {
 
   return (
     <>
-      <Modal opened={appearanceModalOpened} onClose={closeAppearanceModal} title="Appearance">
-        <AppearanceControls />
+      <Modal 
+        opened={debugModalOpened} 
+        onClose={closeDebugModal} 
+        title="Browser Audio Debug Information"
+        size="lg"
+        centered
+      >
+        <Code block style={{ fontSize: '12px', maxHeight: '400px', overflow: 'auto' }}>
+          {debugInfo}
+        </Code>
       </Modal>
 
-      <Menu shadow="md" width={200}>
+      <Menu shadow="md" width={280}>
         <Menu.Target>
           <ActionIcon variant="subtle" size="lg" color="gray">
             <IconDots size={20} />
@@ -105,12 +112,7 @@ export function DebugMenu() {
 
         <Menu.Dropdown>
           <Menu.Label>Appearance</Menu.Label>
-          <Menu.Item
-            leftSection={<IconPalette size={16} />}
-            onClick={openAppearanceModal}
-          >
-            Theme
-          </Menu.Item>
+          <AppearanceControls />
 
           <Menu.Divider />
 
@@ -130,18 +132,6 @@ export function DebugMenu() {
           </Menu.Item>
         </Menu.Dropdown>
       </Menu>
-
-      <Modal 
-        opened={debugModalOpened} 
-        onClose={closeDebugModal} 
-        title="Browser Audio Debug Information"
-        size="lg"
-        centered
-      >
-        <Code block style={{ fontSize: '12px', maxHeight: '400px', overflow: 'auto' }}>
-          {debugInfo}
-        </Code>
-      </Modal>
 
       {audioStatus && (
         <div style={{ 
