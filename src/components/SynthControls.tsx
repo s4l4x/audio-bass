@@ -1,4 +1,5 @@
 import { Stack, Text, Slider, Select, Button, Group, Title } from '@mantine/core'
+import { EditableValue } from './EditableValue'
 import { ADSRControls } from './ADSRControls'
 import { WaveformVisualization } from './WaveformVisualization'
 import type { SynthSettings } from '../types/instruments'
@@ -60,9 +61,15 @@ export function SynthControls({
       />
 
       <div>
-        <Text size="xs" mb="4px">
-          Frequency: {settings.frequency >= 1000 ? `${(settings.frequency / 1000).toFixed(1)}k` : settings.frequency} Hz
-        </Text>
+        <EditableValue
+          label="Frequency"
+          value={settings.frequency}
+          unit="Hz"
+          onValueChange={(value) => onSettingsChange({ frequency: value })}
+          formatDisplay={(value) => value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toString()}
+          min={20}
+          max={20000}
+        />
         <Slider
           value={Math.log10(settings.frequency / 20) * 100}
           onChange={(scaledValue) => {
@@ -73,13 +80,22 @@ export function SynthControls({
           max={300}
           step={1}
           size="sm"
+          label={(scaledValue) => {
+            const frequency = Math.round(20 * Math.pow(10, scaledValue / 100))
+            return `${frequency} Hz`
+          }}
         />
       </div>
 
       <div>
-        <Text size="xs" mb="4px">
-          Volume: {settings.volume} dB
-        </Text>
+        <EditableValue
+          label="Volume"
+          value={settings.volume}
+          unit="dB"
+          onValueChange={(value) => onSettingsChange({ volume: value })}
+          min={-30}
+          max={6}
+        />
         <Slider
           value={settings.volume}
           onChange={(value) => onSettingsChange({ volume: value })}

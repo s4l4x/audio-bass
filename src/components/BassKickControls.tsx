@@ -1,4 +1,5 @@
 import { Stack, Text, Slider, Select, Button, Group, Title } from '@mantine/core'
+import { EditableValue } from './EditableValue'
 import { ADSRControls } from './ADSRControls'
 import { WaveformVisualization } from './WaveformVisualization'
 import type { MembraneSynthSettings } from '../types/instruments'
@@ -57,9 +58,14 @@ export function BassKickControls({
       />
 
       <div>
-        <Text size="xs" mb="4px">
-          Volume: {settings.volume} dB
-        </Text>
+        <EditableValue
+          label="Volume"
+          value={settings.volume}
+          unit="dB"
+          onValueChange={(value) => onSettingsChange({ volume: value })}
+          min={-30}
+          max={6}
+        />
         <Slider
           value={settings.volume}
           onChange={(value) => onSettingsChange({ volume: value })}
