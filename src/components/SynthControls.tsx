@@ -27,9 +27,9 @@ export function SynthControls({
       <Group justify="center">
         <Button 
           size="lg" 
-          onMouseDown={onPlay}
-          onMouseUp={onStop}
-          onMouseLeave={onStop}
+          onMouseDown={() => onPlay()}
+          onMouseUp={() => onStop()}
+          onMouseLeave={() => onStop()}
           variant={isPlaying ? "filled" : "outline"}
         >
           Hold to Play
