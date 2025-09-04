@@ -14,7 +14,6 @@ export function WaveformVisualization({
   height = 120,
   isGenerating = false
 }: WaveformVisualizationProps) {
-  const theme = useMantineTheme()
   const computedColorScheme = useComputedColorScheme('light')
   const isDark = computedColorScheme === 'dark'
   const [waveformPath, setWaveformPath] = useState('')
@@ -141,16 +140,6 @@ export function WaveformVisualization({
             Updating...
           </text>
         )}
-
-        {/* Labels */}
-        <text
-          x={padding}
-          y={height - 5}
-          fontSize="10"
-          fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '2' : '6'})`}
-        >
-          Waveform
-        </text>
       </svg>
     </Box>
   )

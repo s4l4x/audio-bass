@@ -350,7 +350,7 @@ export function GraphicalADSR({
             fontWeight="500"
             fill={`var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '2' : '6'})`}
           >
-            Total: {(settings.attack + settings.decay + settings.sustainDuration + settings.release).toFixed(2)}s
+            {(settings.attack + settings.decay + settings.sustainDuration + settings.release).toFixed(2)}s
           </text>
           
         </svg>
