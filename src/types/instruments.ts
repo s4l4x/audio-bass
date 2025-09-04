@@ -1,7 +1,7 @@
 import * as Tone from 'tone'
 import type { ADSRSettings } from '../hooks/useADSR'
 
-export type InstrumentType = 'synth' | 'membraneSynth' | 'amSynth' | 'fmSynth'
+export type InstrumentType = 'synth' | 'membraneSynth'
 
 export interface BaseInstrumentSettings {
   volume: number

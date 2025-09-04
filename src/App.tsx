@@ -15,20 +15,16 @@ function App() {
     triggerRelease, 
     triggerAttackRelease,
     getWaveformData
-  } = useInstrument('synth')
+  } = useInstrument('membraneSynth')
 
   const instrumentOptions = [
-    { value: 'synth', label: '🎹 Synthesizer' },
     { value: 'membraneSynth', label: '🥁 Bass Kick' },
-    { value: 'amSynth', label: '📻 AM Synth' },
-    { value: 'fmSynth', label: '🎛️ FM Synth' }
+    { value: 'synth', label: '🎹 Synthesizer' }
   ]
 
   const renderInstrumentControls = () => {
     switch (config.type) {
       case 'synth':
-      case 'amSynth':
-      case 'fmSynth':
         return (
           <SynthControls
             settings={config.settings as SynthSettings}

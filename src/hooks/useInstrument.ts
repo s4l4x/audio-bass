@@ -8,7 +8,7 @@ import type {
   InstrumentSettings 
 } from '../types/instruments'
 
-const createInstrument = (type: InstrumentType): Tone.Synth | Tone.MembraneSynth | Tone.AMSynth | Tone.FMSynth => {
+const createInstrument = (type: InstrumentType): Tone.Synth | Tone.MembraneSynth => {
   console.log('🏭 Creating instrument:', type)
   
   try {
@@ -21,14 +21,6 @@ const createInstrument = (type: InstrumentType): Tone.Synth | Tone.MembraneSynth
         const membrane = new Tone.MembraneSynth()
         console.log('✅ Membrane synth created successfully')
         return membrane
-      case 'amSynth':
-        const am = new Tone.AMSynth()
-        console.log('✅ AM synth created successfully')
-        return am
-      case 'fmSynth':
-        const fm = new Tone.FMSynth()
-        console.log('✅ FM synth created successfully')
-        return fm
       default:
         console.log('⚠️ Unknown type, falling back to basic synth')
         return new Tone.Synth()
@@ -67,17 +59,6 @@ const getDefaultSettings = (type: InstrumentType): InstrumentSettings => {
         oscillatorType: 'sine'
       } as MembraneSynthSettings
 
-    case 'amSynth':
-    case 'fmSynth':
-      return {
-        ...baseSettings,
-        frequency: 440,
-        envelope: { 
-          attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0,
-          attackCurve: 'exponential', decayCurve: 'exponential', releaseCurve: 'exponential'
-        },
-        oscillatorType: 'sine'
-      } as SynthSettings
 
     default:
       return {
@@ -92,13 +73,13 @@ const getDefaultSettings = (type: InstrumentType): InstrumentSettings => {
   }
 }
 
-const applySettingsToInstrument = (instrument: Tone.Synth | Tone.MembraneSynth | Tone.AMSynth | Tone.FMSynth, type: InstrumentType, settings: InstrumentSettings) => {
+const applySettingsToInstrument = (instrument: Tone.Synth | Tone.MembraneSynth, type: InstrumentType, settings: InstrumentSettings) => {
   // Apply volume
   instrument.volume.value = settings.volume
 
-  if (type === 'synth' || type === 'amSynth' || type === 'fmSynth') {
+  if (type === 'synth') {
     const synthSettings = settings as SynthSettings
-    const synth = instrument as Tone.Synth | Tone.AMSynth | Tone.FMSynth
+    const synth = instrument as Tone.Synth
     
     if ('oscillator' in synth) {
       synth.oscillator.type = synthSettings.oscillatorType
@@ -140,7 +121,7 @@ export function useInstrument(initialType: InstrumentType) {
   })
   
   const [isPlaying, setIsPlaying] = useState(false)
-  const instrumentRef = useRef<Tone.Synth | Tone.MembraneSynth | Tone.AMSynth | Tone.FMSynth | null>(null)
+  const instrumentRef = useRef<Tone.Synth | Tone.MembraneSynth | null>(null)
   const waveformRef = useRef<Tone.Recorder | null>(null)
   const [isGeneratingWaveform, setIsGeneratingWaveform] = useState(false)
   const lastRecordingRef = useRef<AudioBuffer | null>(null)
