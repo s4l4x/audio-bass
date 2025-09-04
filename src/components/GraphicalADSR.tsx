@@ -262,14 +262,14 @@ export function GraphicalADSR({
         style={{ 
           border: `1px solid var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '4' : '3'})`,
           borderRadius: '8px',
-          padding: '8px',
+          padding: '4px',
           backgroundColor: `var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '6' : '0'})`
         }}
       >
         <svg
           ref={svgRef}
           width={width}
-          height={height + 10}
+          height={height}
           style={{ 
             cursor: dragState.isDragging ? 'grabbing' : 'default',
             userSelect: 'none'
