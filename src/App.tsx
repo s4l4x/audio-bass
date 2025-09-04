@@ -62,7 +62,7 @@ function App() {
       {/* Main Content - Centered */}
       <Center style={{ minHeight: '100vh' }}>
         <Container size="sm">
-          <Title order={1} ta="center" mb="xl">
+          <Title order={1} ta="center" mb="xl" fw="400">
             Audio Bass
           </Title>
           

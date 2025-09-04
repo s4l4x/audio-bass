@@ -2,6 +2,7 @@ import { createTheme } from '@mantine/core';
 
 export const theme = createTheme({
   fontFamily: 'Oxanium, system-ui, Avenir, Helvetica, Arial, sans-serif',
+  headings: { fontFamily: 'Orbitron, sans-serif' },
   other: {
     adsrColors: {
       attack: '#51cf66',
