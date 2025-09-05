@@ -31,7 +31,6 @@ export function GraphicalADSR({
   ranges,
   width = 400,
   height = 200,
-  totalDuration,
   onReset
 }: GraphicalADSRProps) {
   const theme = useMantineTheme();
@@ -121,14 +120,6 @@ export function GraphicalADSR({
           // All exponential curves: slow start, fast end - use 1-(1-t)^2
           const expCurve = 1 - Math.pow(1 - t, 2)
           y = startY + (endY - startY) * expCurve
-          break
-        case 'sine':
-          const sineCurve = Math.sin(t * Math.PI * 0.5)
-          y = startY + (endY - startY) * sineCurve
-          break
-        case 'cosine':
-          const cosineCurve = 1 - Math.cos(t * Math.PI * 0.5)
-          y = startY + (endY - startY) * cosineCurve
           break
         case 'linear':
         default:

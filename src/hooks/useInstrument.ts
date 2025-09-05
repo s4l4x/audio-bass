@@ -7,23 +7,27 @@ import type {
   MembraneSynthSettings,
   InstrumentSettings 
 } from '../types/instruments'
+import type { ADSRSettings } from './useADSR'
 
 const createInstrument = (type: InstrumentType): Tone.Synth | Tone.MembraneSynth => {
   console.log('🏭 Creating instrument:', type)
   
   try {
     switch (type) {
-      case 'synth':
+      case 'synth': {
         const synth = new Tone.Synth()
         console.log('✅ Basic synth created successfully')
         return synth
-      case 'membraneSynth':
+      }
+      case 'membraneSynth': {
         const membrane = new Tone.MembraneSynth()
         console.log('✅ Membrane synth created successfully')
         return membrane
-      default:
+      }
+      default: {
         console.log('⚠️ Unknown type, falling back to basic synth')
         return new Tone.Synth()
+      }
     }
   } catch (error) {
     console.error('❌ Failed to create', type, ':', String(error).slice(0, 100))
@@ -127,8 +131,7 @@ export function useInstrument(initialType: InstrumentType) {
   const [isPlaying, setIsPlaying] = useState(false)
   const instrumentRef = useRef<Tone.Synth | Tone.MembraneSynth | null>(null)
   const waveformRef = useRef<Tone.Recorder | null>(null)
-  const [isGeneratingWaveform, setIsGeneratingWaveform] = useState(false)
-  const lastRecordingRef = useRef<AudioBuffer | null>(null)
+  const lastRecordingRef = useRef<Tone.ToneAudioBuffer | null>(null)
   const [waveformDataVersion, setWaveformDataVersion] = useState(0)
 
   // Helper function to calculate total ADSR duration
@@ -160,7 +163,6 @@ export function useInstrument(initialType: InstrumentType) {
               attack: membraneSettings.envelope.attack,
               decay: membraneSettings.envelope.decay,
               sustain: membraneSettings.envelope.sustain,
-              sustainDuration: membraneSettings.envelope.sustainDuration,
               release: membraneSettings.envelope.release,
               attackCurve: membraneSettings.envelope.attackCurve,
               decayCurve: membraneSettings.envelope.decayCurve,

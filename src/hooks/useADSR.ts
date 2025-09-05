@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export type CurveType = 'linear' | 'exponential' | 'sine' | 'cosine'
+export type CurveType = 'linear' | 'exponential'
 
 export interface ADSRSettings {
   attack: number

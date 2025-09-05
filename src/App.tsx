@@ -1,4 +1,4 @@
-import { Container, Title, Center, Select, Divider, Box, Paper } from '@mantine/core'
+import { Container, Center, Select, Box, Paper } from '@mantine/core'
 import { useInstrument } from './hooks/useInstrument'
 import { SynthControls } from './components/SynthControls'
 import { BassKickControls } from './components/BassKickControls'

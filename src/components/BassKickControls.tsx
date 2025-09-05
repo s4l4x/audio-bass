@@ -77,9 +77,14 @@ export function BassKickControls({
       </div>
 
       <div>
-        <Text size="xs" mb="4px">
-          Pitch Decay: {settings.pitchDecay.toFixed(3)}s
-        </Text>
+        <EditableValue
+          label="Pitch Decay"
+          value={settings.pitchDecay}
+          unit="s"
+          onValueChange={(value) => onSettingsChange({ pitchDecay: value })}
+          min={0.001}
+          max={0.5}
+        />
         <Slider
           value={settings.pitchDecay}
           onChange={(value) => onSettingsChange({ pitchDecay: value })}
@@ -91,9 +96,14 @@ export function BassKickControls({
       </div>
 
       <div>
-        <Text size="xs" mb="4px">
-          Octaves: {settings.octaves}
-        </Text>
+        <EditableValue
+          label="Octaves"
+          value={settings.octaves}
+          unit=""
+          onValueChange={(value) => onSettingsChange({ octaves: value })}
+          min={1}
+          max={20}
+        />
         <Slider
           value={settings.octaves}
           onChange={(value) => onSettingsChange({ octaves: value })}
