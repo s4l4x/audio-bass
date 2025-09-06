@@ -5,7 +5,7 @@ import { EditableValue } from './EditableValue'
 import { ADSRControls } from './ADSRControls'
 import { WaveformVisualization } from './WaveformVisualization'
 import type { SynthSettings } from '../types/instruments'
-import type { ADSRSettings } from '../hooks/useADSR'
+import type { SustainedADSRSettings } from '../hooks/useADSR'
 
 interface SynthControlsProps {
   settings: SynthSettings
@@ -37,7 +37,7 @@ export function SynthControls({
     }
   }
   
-  const handleADSRChange = (envelope: ADSRSettings) => {
+  const handleADSRChange = (envelope: SustainedADSRSettings) => {
     onSettingsChange({ envelope })
   }
 
@@ -129,9 +129,10 @@ export function SynthControls({
       </div>
 
       <ADSRControls
+        instrumentType="sustained"
         initialSettings={settings.envelope}
         onSettingsChange={handleADSRChange}
-        totalDuration={settings.envelope.attack + settings.envelope.decay + settings.envelope.sustainDuration + settings.envelope.release}
+        totalDuration={settings.envelope.attack + settings.envelope.decay + 1.0 + settings.envelope.release}
       />
     </Stack>
   )

@@ -61,11 +61,17 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
       let bufferDuration = 1.0 // Default fallback
       
       if (nodeDefinition.type === 'MembraneSynth' && settings.envelope) {
-        bufferDuration = settings.envelope.attack + settings.envelope.decay + 
-                        settings.envelope.sustainDuration + settings.envelope.release + 0.1
+        // Percussive instrument - use full ADSR cycle including sustainDuration
+        // Use same fallback values as triggerGraph to ensure consistency
+        bufferDuration = (settings.envelope.attack || 0.001) + 
+                        (settings.envelope.decay || 0.4) + 
+                        (settings.envelope.sustainDuration || 0.1) + 
+                        (settings.envelope.release || 1.4) + 0.1
       } else if (nodeDefinition.type === 'Synth' && settings.envelope) {
+        // Sustained instrument - add artificial sustain duration for visualization (1 second)
+        const sustainDuration = 1.0 // Show 1 second of sustain for visualization
         bufferDuration = settings.envelope.attack + settings.envelope.decay + 
-                        settings.envelope.sustainDuration + settings.envelope.release + 0.1
+                        sustainDuration + settings.envelope.release + 0.1
       }
       
       // Get Tone module for waveform generation
@@ -76,7 +82,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
       }
 
       // Generate waveform using Tone.Offline
-      const buffer = await Tone.Offline((context: any) => {
+      const buffer = await Tone.Offline((context: unknown) => {
         if (nodeDefinition.type === 'MembraneSynth') {
           // Provide safe defaults for MembraneSynth
           const membraneSettings = {
@@ -91,6 +97,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
               decay: settings.envelope?.decay || 0.4,
               sustain: settings.envelope?.sustain || 0.01,
               release: settings.envelope?.release || 1.4,
+              sustainDuration: settings.envelope?.sustainDuration || 0.1,
               attackCurve: settings.envelope?.attackCurve || 'exponential',
               decayCurve: settings.envelope?.decayCurve || 'exponential',
               releaseCurve: settings.envelope?.releaseCurve || 'exponential'
@@ -103,7 +110,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
           synth.triggerAttack('C2', 0)
           
           const releaseTime = membraneSettings.envelope.attack + membraneSettings.envelope.decay + 
-                             (settings.envelope?.sustainDuration || 0.1)
+                             membraneSettings.envelope.sustainDuration
           synth.triggerRelease(releaseTime)
           
         } else if (nodeDefinition.type === 'Synth') {
@@ -129,8 +136,8 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
           synth.connect(context.destination)
           synth.triggerAttack(settings.frequency || 440, 0)
           
-          const releaseTime = synthSettings.envelope.attack + synthSettings.envelope.decay + 
-                             (settings.envelope?.sustainDuration || 1.0)
+          // For sustained instruments, use 1 second of sustain for waveform visualization
+          const releaseTime = synthSettings.envelope.attack + synthSettings.envelope.decay + 1.0
           synth.triggerRelease(releaseTime)
         }
       }, bufferDuration)
@@ -280,8 +287,8 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
   }, [])
 
   // Update node settings within the graph
-  const updateNodeInGraph = useCallback((nodeId: string, settings: Record<string, unknown>) => {
-    updateNodeSettings(nodeId, settings)
+  const updateNodeInGraph = useCallback(async (nodeId: string, settings: Record<string, unknown>) => {
+    await updateNodeSettings(nodeId, settings)
     
     // Apply any modulation that might affect this node
     applyModulation(nodeId)
@@ -372,11 +379,36 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
         console.log('🎵 Trigger mode detected:', config.graph.trigger)
         
         if (config.graph.trigger === 'momentary') {
-          // For bass kick style - one shot trigger
-          console.log('🥁 Triggering bass kick:', note || 'C2')
-          toneNode.triggerAttackRelease(note || 'C2', '8n')
+          // For bass kick style - use triggerAttack and delayed triggerRelease
+          // This lets the instrument's envelope handle the amplitude curve naturally
+          const noteToPlay = note || 'C2'
+          
+          // Calculate when to trigger release (after attack + decay + sustainDuration)
+          const envelope = node.settings.envelope || {}
+          const attackTime = envelope.attack || 0.001
+          const decayTime = envelope.decay || 0.4
+          const sustainDuration = envelope.sustainDuration || 0.1
+          const releaseTime = envelope.release || 1.4
+          
+          const releaseStartTime = attackTime + decayTime + sustainDuration
+          const totalDuration = releaseStartTime + releaseTime
+          
+          console.log('🥁 Triggering bass kick attack:', noteToPlay)
+          console.log('🥁 Release timing - start at:', releaseStartTime + 's', 'total duration:', totalDuration + 's')
+          
+          // Start the attack
+          toneNode.triggerAttack(noteToPlay)
+          
+          // Schedule the release after the sustain duration
+          setTimeout(() => {
+            if (toneNode && 'triggerRelease' in toneNode) {
+              console.log('🥁 Triggering bass kick release')
+              toneNode.triggerRelease()
+            }
+          }, releaseStartTime * 1000)
+          
           setIsPlaying(true)
-          setTimeout(() => setIsPlaying(false), 150)
+          setTimeout(() => setIsPlaying(false), Math.max(150, totalDuration * 1000))
         } else {
           // For synth style - sustained note
           // Release any currently playing note first to prevent overlapping
@@ -402,7 +434,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
         console.warn('⚠️ Node not triggerable:', nodeId)
       }
     }
-  }, [config, getNodeById, waveformData, generateWaveformData, initializeNodeInstance])
+  }, [config, getNodeById, waveformData, generateWaveformData, initializeNodeInstance, isPlaying])
 
   // Release the graph (stop playbook for sustained notes)
   const releaseGraph = useCallback(() => {

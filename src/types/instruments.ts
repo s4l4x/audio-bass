@@ -1,5 +1,5 @@
 // Note: Tone types are now loaded dynamically to prevent AudioContext warnings
-import type { ADSRSettings } from '../hooks/useADSR'
+import type { ADSRSettings, SustainedADSRSettings } from '../hooks/useADSR'
 
 export type InstrumentType = 'synth' | 'membraneSynth'
 
@@ -9,7 +9,7 @@ export interface BaseInstrumentSettings {
 
 export interface SynthSettings extends BaseInstrumentSettings {
   frequency: number
-  envelope: ADSRSettings
+  envelope: SustainedADSRSettings
   oscillatorType: 'sine' | 'square' | 'sawtooth' | 'triangle'
 }
 
@@ -26,5 +26,5 @@ export interface InstrumentConfig<T extends InstrumentSettings = InstrumentSetti
   type: InstrumentType
   name: string
   settings: T
-  instrument?: any // Tone.Synth | Tone.MembraneSynth | Tone.AMSynth | Tone.FMSynth
+  instrument?: unknown // Tone.Synth | Tone.MembraneSynth | Tone.AMSynth | Tone.FMSynth
 }

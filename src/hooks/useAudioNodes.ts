@@ -203,7 +203,7 @@ export function useAudioNodes() {
   }, [])
 
   // Update node settings
-  const updateNodeSettings = useCallback((nodeId: string, newSettings: Record<string, any>) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const updateNodeSettings = useCallback(async (nodeId: string, newSettings: Record<string, any>) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const node = nodesRef.current.get(nodeId)
     if (!node || node.isDisposed) {
       console.warn('⚠️ Cannot update settings for non-existent or disposed node:', nodeId, 'Available nodes:', Array.from(nodesRef.current.keys()))
@@ -220,8 +220,18 @@ export function useAudioNodes() {
       const transformedSettings = transformSettingsForNodeType(node.type, newSettings)
       console.log(`🔧 Transformed settings:`, transformedSettings)
       
-      // Apply settings to the Tone.js instance
-      const instance = node.instance
+      // Apply settings to the Tone.js instance (initialize if needed)
+      let instance = node.instance
+      if (instance === null) {
+        console.log('🔧 Auto-initializing node for settings update:', nodeId)
+        const initialized = await initializeNodeInstance(node)
+        if (!initialized) {
+          console.error('❌ Failed to initialize node for settings update:', nodeId)
+          return
+        }
+        instance = node.instance
+      }
+      
       for (const [key, value] of Object.entries(transformedSettings)) {
         console.log(`🔍 Processing property: ${key} =`, value)
         if (instance[key] !== undefined) {

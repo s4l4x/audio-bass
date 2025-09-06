@@ -137,6 +137,7 @@ export function BassKickControls({
       </div>
 
       <ADSRControls
+        instrumentType="percussive"
         initialSettings={settings.envelope}
         ranges={{
           attack: [0.001, 0.1],

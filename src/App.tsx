@@ -34,7 +34,7 @@ function App() {
   }
 
   // Helper function to update settings for the current instrument node
-  const updateSettings = (newSettings: Partial<SynthSettings | MembraneSynthSettings>) => {
+  const updateSettings = async (newSettings: Partial<SynthSettings | MembraneSynthSettings>) => {
     // Get the trigger node (the main instrument node)
     const triggerNode = Object.entries(config.graph.nodes)
       .find(([, nodeDef]) => nodeDef.trigger)?.[0]
@@ -43,7 +43,7 @@ function App() {
       // Check if the node actually exists before trying to update it
       const nodeExists = nodes.get(triggerNode)
       if (nodeExists && !nodeExists.isDisposed) {
-        updateNodeInGraph(triggerNode, newSettings)
+        await updateNodeInGraph(triggerNode, newSettings)
       } else {
         console.warn('⚠️ Skipping settings update - node not ready:', triggerNode)
       }
@@ -75,7 +75,6 @@ function App() {
             decay: 0.3,
             sustain: 0.3,
             release: 1.0,
-            sustainDuration: 1.0,
             attackCurve: 'exponential',
             decayCurve: 'exponential', 
             releaseCurve: 'exponential'

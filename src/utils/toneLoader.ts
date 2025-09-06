@@ -3,8 +3,8 @@
  * Only loads Tone.js when first needed (user interaction)
  */
 
-let toneModule: any = null
-let loadingPromise: Promise<any> | null = null
+let toneModule: unknown = null
+let loadingPromise: Promise<unknown> | null = null
 
 export async function loadTone() {
   // Return cached module if already loaded

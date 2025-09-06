@@ -1,10 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Box, useMantineTheme, useComputedColorScheme, Button } from '@mantine/core'
-import type { ADSRSettings, CurveType } from '../hooks/useADSR'
+import type { ADSRSettings, CurveType, BaseADSRSettings, InstrumentType } from '../hooks/useADSR'
 
 interface GraphicalADSRProps {
-  settings: ADSRSettings
-  onSettingsChange: (settings: ADSRSettings) => void
+  instrumentType?: InstrumentType
+  settings: BaseADSRSettings
+  onSettingsChange: (settings: BaseADSRSettings) => void
   ranges?: {
     attack?: [number, number]
     decay?: [number, number]
@@ -26,6 +27,7 @@ interface ControlPoint {
 }
 
 export function GraphicalADSR({ 
+  instrumentType = 'percussive',
   settings, 
   onSettingsChange,
   ranges,
@@ -89,12 +91,26 @@ export function GraphicalADSR({
   // Track the live settings during drag for real-time duration calculation
   const [liveSettings, setLiveSettings] = useState(settings)
   
+  // Track stable duration during drag to prevent graph boundary jumping
+  const [stableDurationDuringDrag, setStableDurationDuringDrag] = useState<number | null>(null)
+  
   // Use live settings during drag for real-time duration updates
   const currentSettings = dragState.isDragging ? liveSettings : settings
-  const currentTotalDuration = currentSettings.attack + currentSettings.decay + currentSettings.sustainDuration + currentSettings.release
   
-  // Use consistent 1-second minimum to prevent graph snapping
-  const actualTotalDuration = Math.max(currentTotalDuration, 1.0)
+  // Calculate total duration based on instrument type
+  const getSustainDuration = useCallback((settings: BaseADSRSettings): number => {
+    return 'sustainDuration' in settings ? (settings as ADSRSettings).sustainDuration : 0
+  }, [])
+  
+  const currentTotalDuration = instrumentType === 'sustained' 
+    ? currentSettings.attack + currentSettings.decay + 1.0 + currentSettings.release // Fixed 1-second sustain for visualization
+    : currentSettings.attack + currentSettings.decay + getSustainDuration(currentSettings) + currentSettings.release
+  
+  // Use stable duration during drag to prevent graph boundary jumping
+  // This makes dragging smoother, especially when dragging left
+  const actualTotalDuration = dragState.isDragging && stableDurationDuringDrag !== null
+    ? Math.max(stableDurationDuringDrag, 1.0)
+    : Math.max(currentTotalDuration, 1.0)
 
   // Use flexible ranges with defaults
   const defaultRanges = {
@@ -118,8 +134,12 @@ export function GraphicalADSR({
   // Time-based positioning using current settings (live during drag)
   const attackX = padding + (currentSettings.attack / actualTotalDuration) * graphWidth
   const decayX = padding + ((currentSettings.attack + currentSettings.decay) / actualTotalDuration) * graphWidth
-  const sustainX = padding + ((currentSettings.attack + currentSettings.decay + currentSettings.sustainDuration) / actualTotalDuration) * graphWidth
-  const releaseX = padding + ((currentSettings.attack + currentSettings.decay + currentSettings.sustainDuration + currentSettings.release) / actualTotalDuration) * graphWidth
+  
+  // For sustained instruments, show a fixed 1-second sustain visual duration
+  // For percussive instruments, use actual sustainDuration
+  const sustainDuration = instrumentType === 'sustained' ? 1.0 : getSustainDuration(currentSettings)
+  const sustainX = padding + ((currentSettings.attack + currentSettings.decay + sustainDuration) / actualTotalDuration) * graphWidth
+  const releaseX = padding + ((currentSettings.attack + currentSettings.decay + sustainDuration + currentSettings.release) / actualTotalDuration) * graphWidth
 
   // Y positions (inverted because SVG y increases downward)
   const topY = topPadding
@@ -171,12 +191,19 @@ export function GraphicalADSR({
     const rect = svgRef.current?.getBoundingClientRect()
     if (!rect) return
 
+    // Capture the current total duration to keep graph boundary stable during drag
+    const currentDuration = instrumentType === 'sustained' 
+      ? settings.attack + settings.decay + 1.0 + settings.release
+      : settings.attack + settings.decay + getSustainDuration(settings) + settings.release
+    
+    setStableDurationDuringDrag(Math.max(currentDuration, 1.0))
+    
     setDragState({
       isDragging: true,
       dragId: pointId,
       startPos: { x: event.clientX - rect.left, y: event.clientY - rect.top }
     })
-  }, [])
+  }, [settings, instrumentType, getSustainDuration])
 
   // Touch event handlers for mobile support
   const handleTouchStart = useCallback((event: React.TouchEvent, pointId: string) => {
@@ -186,13 +213,20 @@ export function GraphicalADSR({
     const rect = svgRef.current?.getBoundingClientRect()
     if (!rect || !event.touches[0]) return
 
+    // Capture the current total duration to keep graph boundary stable during drag
+    const currentDuration = instrumentType === 'sustained' 
+      ? settings.attack + settings.decay + 1.0 + settings.release
+      : settings.attack + settings.decay + getSustainDuration(settings) + settings.release
+    
+    setStableDurationDuringDrag(Math.max(currentDuration, 1.0))
+
     const touch = event.touches[0]
     setDragState({
       isDragging: true,
       dragId: pointId,
       startPos: { x: touch.clientX - rect.left, y: touch.clientY - rect.top }
     })
-  }, [])
+  }, [settings, instrumentType, getSustainDuration])
 
   // Unified drag handling function used by both mouse and touch
   const handleDragMove = useCallback((x: number, y: number) => {
@@ -239,22 +273,34 @@ export function GraphicalADSR({
         ))
         newSettings.sustain = sustainPointLevel
         
-        // Sustain point can be moved freely along time axis
-        // The sustain phase ends at this point, so sustain duration = this time - (attack + decay)
-        const sustainStartTime = settings.attack + settings.decay
-        const sustainEndTime = Math.max(sustainStartTime + sustainMinDuration, timeAtMouseX)
-        const newSustainDuration = Math.max(sustainMinDuration, 
-          Math.min(sustainMaxDuration * 3, sustainEndTime - sustainStartTime)
-        )
-        newSettings.sustainDuration = newSustainDuration
+        // For percussive instruments, allow moving sustain duration via X-axis
+        if (instrumentType === 'percussive') {
+          // Sustain point can be moved freely along time axis
+          // The sustain phase ends at this point, so sustain duration = this time - (attack + decay)
+          const sustainStartTime = settings.attack + settings.decay
+          const sustainEndTime = Math.max(sustainStartTime + sustainMinDuration, timeAtMouseX)
+          const newSustainDuration = Math.max(sustainMinDuration, 
+            Math.min(sustainMaxDuration * 3, sustainEndTime - sustainStartTime)
+          );
+          if ('sustainDuration' in newSettings) {
+            (newSettings as ADSRSettings).sustainDuration = newSustainDuration
+          }
+        }
+        // For sustained instruments: sustain level is adjustable, duration is fixed at 1 second for visualization
         break
       }
         
       case 'release': {
         // Release time - X-only movement - allow extending beyond current bounds
-        const releaseStartTime = settings.attack + settings.decay + settings.sustainDuration
+        // Use current live settings for consistent calculations during drag
+        const currentSustainDur = instrumentType === 'sustained' ? 1.0 : getSustainDuration(liveSettings)
+        const releaseStartTime = liveSettings.attack + liveSettings.decay + currentSustainDur
+        
+        // Calculate release duration from mouse position
+        // Ensure minimum release duration even when dragging far left
+        const calculatedReleaseTime = Math.max(timeAtMouseX - releaseStartTime, releaseMinTime)
         const releaseTime = Math.max(releaseMinTime, 
-          Math.min(releaseMaxTime * 3, timeAtMouseX - releaseStartTime) // Allow up to 3x the normal max
+          Math.min(releaseMaxTime * 3, calculatedReleaseTime) // Allow up to 3x the normal max
         )
         newSettings.release = releaseTime
         break
@@ -264,7 +310,7 @@ export function GraphicalADSR({
     // Update live settings for real-time duration calculation
     setLiveSettings(newSettings)
     onSettingsChange(newSettings)
-  }, [dragState, settings, onSettingsChange, actualTotalDuration, graphWidth, graphHeight, padding, topPadding, attackMinTime, attackMaxTime, decayMinTime, decayMaxTime, sustainMinDuration, sustainMaxDuration, releaseMinTime, releaseMaxTime])
+  }, [dragState, settings, liveSettings, onSettingsChange, actualTotalDuration, graphWidth, graphHeight, padding, topPadding, attackMinTime, attackMaxTime, decayMinTime, decayMaxTime, sustainMinDuration, sustainMaxDuration, releaseMinTime, releaseMaxTime, instrumentType, getSustainDuration])
 
   const handleMouseMove = useCallback((event: MouseEvent) => {
     const rect = svgRef.current?.getBoundingClientRect()
@@ -294,6 +340,9 @@ export function GraphicalADSR({
       dragId: null,
       startPos: { x: 0, y: 0 }
     })
+    
+    // Clear stable duration to allow graph boundary to animate to fit
+    setStableDurationDuringDrag(null)
   }, [])
 
   const handleTouchEnd = useCallback(() => {
@@ -303,17 +352,24 @@ export function GraphicalADSR({
       dragId: null,
       startPos: { x: 0, y: 0 }
     })
+    
+    // Clear stable duration to allow graph boundary to animate to fit
+    setStableDurationDuringDrag(null)
   }, [])
 
   // Sync live settings with actual settings when not dragging, but only if they're different
   useEffect(() => {
     if (!dragState.isDragging) {
       // Only sync if the settings are significantly different (external change)
-      const isDifferent = Math.abs(liveSettings.attack - settings.attack) > 0.001 ||
-                          Math.abs(liveSettings.decay - settings.decay) > 0.001 ||
-                          Math.abs(liveSettings.sustain - settings.sustain) > 0.001 ||
-                          Math.abs(liveSettings.release - settings.release) > 0.001 ||
-                          Math.abs(liveSettings.sustainDuration - settings.sustainDuration) > 0.001
+      const baseDifferent = Math.abs(liveSettings.attack - settings.attack) > 0.001 ||
+                           Math.abs(liveSettings.decay - settings.decay) > 0.001 ||
+                           Math.abs(liveSettings.sustain - settings.sustain) > 0.001 ||
+                           Math.abs(liveSettings.release - settings.release) > 0.001
+      
+      const sustainDurationDifferent = instrumentType === 'percussive' &&
+                                     Math.abs(getSustainDuration(liveSettings) - getSustainDuration(settings)) > 0.001
+                                     
+      const isDifferent = baseDifferent || sustainDurationDifferent
       
       if (isDifferent) {
         const timer = setTimeout(() => {
@@ -322,7 +378,7 @@ export function GraphicalADSR({
         return () => clearTimeout(timer)
       }
     }
-  }, [settings, dragState.isDragging, liveSettings])
+  }, [settings, dragState.isDragging, liveSettings, instrumentType, getSustainDuration])
   
   // Add document-level event listeners when dragging
   useEffect(() => {
@@ -386,7 +442,9 @@ export function GraphicalADSR({
             height: 'auto',
             maxWidth: `${actualWidth}px`,
             userSelect: 'none',
-            touchAction: 'none'
+            touchAction: 'none',
+            // Add smooth transition for boundary changes when not dragging
+            transition: dragState.isDragging ? 'none' : 'all 300ms ease-out'
           }}
         >
           {/* Grid lines */}
@@ -459,6 +517,7 @@ export function GraphicalADSR({
             stroke={colors.sustain}
             strokeWidth="2"
             strokeLinejoin="round"
+            strokeDasharray={instrumentType === 'sustained' ? "5,5" : "none"}
             pointerEvents="none"
           />
           
@@ -477,7 +536,7 @@ export function GraphicalADSR({
             const cursors = {
               attack: 'ew-resize',      // horizontal resize for time
               decay: 'move',            // both horizontal (time) and vertical (sustain level)
-              sustain: 'move',          // both horizontal (duration) and vertical (level)
+              sustain: instrumentType === 'sustained' ? 'ns-resize' : 'move', // vertical only for sustained, both for percussive
               release: 'ew-resize'      // horizontal resize for time
             }
             
