@@ -42,7 +42,7 @@ export type SignalType = 'audio' | 'cv' // cv = control voltage
 // Node definition in configuration
 export interface AudioNodeDefinition {
   type: AudioNodeType
-  settings?: Record<string, any>
+  settings?: Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
   trigger?: boolean // Mark as a trigger node (for instruments)
   inputs?: string[] // Expected input connection points
   outputs?: string[] // Available output connection points
@@ -88,10 +88,10 @@ export interface AudioGraphConfig {
 export interface NodeInstance {
   id: string
   type: AudioNodeType
-  instance: any // The actual Tone.js instance
-  settings: Record<string, any>
-  inputs: Map<string, any> // Input connections
-  outputs: Map<string, any> // Output connections
+  instance: any // eslint-disable-line @typescript-eslint/no-explicit-any
+  settings: Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
+  inputs: Map<string, string> // Input connections (maps port to source node ID)
+  outputs: Map<string, string> // Output connections (maps port to dest node ID)
   waveformData?: Float32Array // For visualization
   isDisposed: boolean
 }
@@ -116,7 +116,7 @@ export type LegacyInstrumentType = 'synth' | 'membraneSynth'
 export interface LegacyInstrumentConfig {
   type: LegacyInstrumentType
   name: string
-  settings: any
+  settings: Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 // Conversion utilities between legacy and graph configs

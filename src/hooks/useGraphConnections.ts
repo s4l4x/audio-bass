@@ -3,7 +3,7 @@ import type { AudioConnection, NodeInstance, SignalType } from '../types/audioGr
 import { parseConnectionString, GraphValidation } from '../utils/graphUtils'
 
 // Helper to get the actual Tone.js connection point from a node
-const getConnectionPoint = (node: NodeInstance, port: string, isInput: boolean): any => {
+const getConnectionPoint = (node: NodeInstance, port: string, isInput: boolean): any => { // eslint-disable-line @typescript-eslint/no-explicit-any
   const instance = node.instance
   
   if (!instance) {
@@ -34,7 +34,7 @@ const getConnectionPoint = (node: NodeInstance, port: string, isInput: boolean):
 export function useGraphConnections(nodes: Map<string, NodeInstance>) {
   const [, setConnections] = useState<AudioConnection[]>([])
   const connectionsRef = useRef<AudioConnection[]>([])
-  const toneConnectionsRef = useRef<Map<string, any>>(new Map()) // Track actual Tone.js connections
+  const toneConnectionsRef = useRef<Map<string, { source: any; dest: any }>>(new Map()) // eslint-disable-line @typescript-eslint/no-explicit-any
   
   // Keep ref in sync with state
   const updateConnectionsRef = useCallback((newConnections: AudioConnection[]) => {

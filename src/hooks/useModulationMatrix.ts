@@ -3,7 +3,7 @@ import type { ModulationRoute, NodeInstance } from '../types/audioGraph'
 import { parseParameterPath } from '../utils/graphUtils'
 
 // Helper to get the actual Tone.js parameter from a node
-const getParameter = (node: NodeInstance, paramName: string): any => {
+const getParameter = (node: NodeInstance, paramName: string): any => { // eslint-disable-line @typescript-eslint/no-explicit-any
   const instance = node.instance
   
   if (!instance) {
@@ -49,7 +49,7 @@ const getParameter = (node: NodeInstance, paramName: string): any => {
 export function useModulationMatrix(nodes: Map<string, NodeInstance>) {
   const [, setModulationRoutes] = useState<ModulationRoute[]>([])
   const routesRef = useRef<ModulationRoute[]>([])
-  const activeModulationsRef = useRef<Map<string, any>>(new Map()) // Track active modulation connections
+  const activeModulationsRef = useRef<Map<string, any>>(new Map()) // eslint-disable-line @typescript-eslint/no-explicit-any
 
   // Keep ref in sync with state  
   const updateRoutesRef = useCallback((newRoutes: ModulationRoute[]) => {

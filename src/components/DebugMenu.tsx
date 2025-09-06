@@ -30,10 +30,11 @@ export function DebugMenu() {
         audioContextState: context.state,
         sampleRate: context.sampleRate,
         currentTime: context.currentTime.toFixed(3),
-        baseLatency: (context as any).baseLatency || 'N/A',
-        outputLatency: (context as any).outputLatency || 'N/A',
+        // Browser AudioContext properties that may not be in all type definitions
+        baseLatency: (context as any).baseLatency || 'N/A', // eslint-disable-line @typescript-eslint/no-explicit-any
+        outputLatency: (context as any).outputLatency || 'N/A', // eslint-disable-line @typescript-eslint/no-explicit-any
         toneVersion: Tone.version || 'Unknown',
-        webAudioSupported: !!(window.AudioContext || (window as any).webkitAudioContext),
+        webAudioSupported: !!(window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext),
         destination: {
           channelCount: Tone.getDestination().channelCount,
           maxChannelCount: Tone.getDestination().maxChannelCount,

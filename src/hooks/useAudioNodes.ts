@@ -3,7 +3,7 @@ import * as Tone from 'tone'
 import type { AudioNodeType, AudioNodeDefinition, NodeInstance } from '../types/audioGraph'
 
 // Factory function to create Tone.js instances based on node type
-const createToneInstance = (type: AudioNodeType, settings: Record<string, any> = {}): any => {
+const createToneInstance = (type: AudioNodeType, settings: Record<string, any> = {}): any => { // eslint-disable-line @typescript-eslint/no-explicit-any
   console.log('🏭 Creating Tone.js instance:', type, settings)
   
   try {
@@ -139,7 +139,7 @@ export function useAudioNodes() {
   }, [updateNodesRef])
 
   // Update node settings
-  const updateNodeSettings = useCallback((nodeId: string, newSettings: Record<string, any>) => {
+  const updateNodeSettings = useCallback((nodeId: string, newSettings: Record<string, any>) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const node = nodesRef.current.get(nodeId)
     if (!node || node.isDisposed) {
       console.warn('⚠️ Cannot update settings for non-existent or disposed node:', nodeId)

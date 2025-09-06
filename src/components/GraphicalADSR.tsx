@@ -112,19 +112,21 @@ export function GraphicalADSR({
     
     for (let i = 0; i <= steps; i++) {
       const t = i / steps
-      let x = startX + (endX - startX) * t
+      const x = startX + (endX - startX) * t
       let y: number
       
       switch (curveType) {
-        case 'exponential':
+        case 'exponential': {
           // All exponential curves: slow start, fast end - use 1-(1-t)^2
           const expCurve = 1 - Math.pow(1 - t, 2)
           y = startY + (endY - startY) * expCurve
           break
+        }
         case 'linear':
-        default:
+        default: {
           y = startY + (endY - startY) * t
           break
+        }
       }
       
       pathPoints.push(i === 0 ? `M ${x} ${y}` : `L ${x} ${y}`)
@@ -165,15 +167,16 @@ export function GraphicalADSR({
     const timeAtMouseX = ((x - padding) / graphWidth) * actualTotalDuration
     
     switch (dragState.dragId) {
-      case 'attack':
+      case 'attack': {
         // Attack time - X-only movement - allow extending beyond normal bounds
         const attackTime = Math.max(attackMinTime, 
           Math.min(attackMaxTime * 3, timeAtMouseX) // Allow up to 3x the normal max
         )
         newSettings.attack = attackTime
         break
+      }
         
-      case 'decay':
+      case 'decay': {
         // Decay point can be moved freely along time axis - allow extending beyond normal bounds
         // The decay phase ends at this point, so decay duration = this time - attack time
         const decayEndTime = Math.max(settings.attack + decayMinTime, timeAtMouseX)
@@ -188,8 +191,9 @@ export function GraphicalADSR({
         ))
         newSettings.sustain = decaySustainLevel
         break
+      }
         
-      case 'sustain':
+      case 'sustain': {
         // Sustain level - Y movement for level
         const sustainPointLevel = Math.max(0, Math.min(1,
           1 - ((y - topPadding) / graphHeight)
@@ -205,8 +209,9 @@ export function GraphicalADSR({
         )
         newSettings.sustainDuration = newSustainDuration
         break
+      }
         
-      case 'release':
+      case 'release': {
         // Release time - X-only movement - allow extending beyond current bounds
         const releaseStartTime = settings.attack + settings.decay + settings.sustainDuration
         const releaseTime = Math.max(releaseMinTime, 
@@ -214,6 +219,7 @@ export function GraphicalADSR({
         )
         newSettings.release = releaseTime
         break
+      }
     }
     
     // Update live settings for real-time duration calculation

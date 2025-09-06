@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Box, useMantineTheme, useComputedColorScheme } from '@mantine/core'
 
 interface WaveformVisualizationProps {
@@ -35,7 +35,7 @@ export function WaveformVisualization({
     : totalDuration
   const actualDuration = Math.max(calculatedDuration, 1.0)
 
-  const updateWaveform = () => {
+  const updateWaveform = useCallback(() => {
     if (!getWaveformData || typeof getWaveformData !== 'function') {
       return
     }
@@ -65,12 +65,12 @@ export function WaveformVisualization({
     }
 
     setWaveformPath(pathCommands.join(' '))
-  }
+  }, [getWaveformData, actualDuration, padding, graphHeight, graphWidth])
 
   // Update waveform immediately when new data becomes available or duration changes
   useEffect(() => {
     updateWaveform()
-  }, [getWaveformData, actualDuration, adsrSettings])
+  }, [updateWaveform])
 
   // Also update when getWaveformData function changes (new data available)
   useEffect(() => {
@@ -82,7 +82,7 @@ export function WaveformVisualization({
     const interval = setInterval(updateWaveform, 1000)
     
     return () => clearInterval(interval)
-  }, [getWaveformData, actualDuration, adsrSettings])
+  }, [updateWaveform, getWaveformData])
 
   return (
     <Box

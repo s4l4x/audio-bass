@@ -76,7 +76,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
   }, [])
 
   // Update node settings within the graph
-  const updateNodeInGraph = useCallback((nodeId: string, settings: Record<string, any>) => {
+  const updateNodeInGraph = useCallback((nodeId: string, settings: Record<string, any>) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     updateNodeSettings(nodeId, settings)
     
     // Apply any modulation that might affect this node
@@ -95,7 +95,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
 
     // Find trigger nodes (nodes marked as triggers in the config)
     const triggerNodes = Object.entries(config.graph.nodes)
-      .filter(([_, nodeDef]) => nodeDef.trigger)
+      .filter(([, nodeDef]) => nodeDef.trigger)
       .map(([nodeId]) => nodeId)
 
     // Trigger all trigger nodes
@@ -120,7 +120,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
   // Release the graph (stop playback for sustained notes)
   const releaseGraph = useCallback(() => {
     const triggerNodes = Object.entries(config.graph.nodes)
-      .filter(([_, nodeDef]) => nodeDef.trigger)
+      .filter(([, nodeDef]) => nodeDef.trigger)
       .map(([nodeId]) => nodeId)
 
     for (const nodeId of triggerNodes) {
