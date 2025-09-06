@@ -1,5 +1,6 @@
-import { Stack, Text, Slider, Select, Button, Group, Title } from '@mantine/core'
+import { Stack, Text, Slider, Select, Button, Group, Title, useMantineTheme } from '@mantine/core'
 import { IconPlayerPlayFilled } from '@tabler/icons-react'
+import { useMediaQuery } from '@mantine/hooks'
 import { EditableValue } from './EditableValue'
 import { ADSRControls } from './ADSRControls'
 import { WaveformVisualization } from './WaveformVisualization'
@@ -21,6 +22,19 @@ export function BassKickControls({
   onTrigger,
   getWaveformData
 }: BassKickControlsProps) {
+  const theme = useMantineTheme()
+  const isMobile = useMediaQuery('(max-width: 768px)')
+  const sliderSize = isMobile ? 'md' : 'sm'
+  
+  // Get responsive thumb size from theme
+  const thumbSize = isMobile ? theme.other.slider.thumb.sizeMobile : theme.other.slider.thumb.size
+  const sliderStyles = {
+    thumb: {
+      width: thumbSize,
+      height: thumbSize,
+    }
+  }
+  
   const handleADSRChange = (envelope: ADSRSettings) => {
     onSettingsChange({ envelope })
   }
@@ -71,7 +85,8 @@ export function BassKickControls({
           min={-30}
           max={6}
           step={1}
-          size="sm"
+          size={sliderSize}
+          styles={sliderStyles}
         />
       </div>
 
@@ -90,7 +105,8 @@ export function BassKickControls({
           min={0.001}
           max={0.5}
           step={0.001}
-          size="sm"
+          size={sliderSize}
+          styles={sliderStyles}
         />
       </div>
 
@@ -109,7 +125,8 @@ export function BassKickControls({
           min={1}
           max={20}
           step={1}
-          size="sm"
+          size={sliderSize}
+          styles={sliderStyles}
         />
       </div>
 

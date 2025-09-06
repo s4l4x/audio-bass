@@ -24,7 +24,10 @@ export function WaveformVisualization({
   useEffect(() => {
     const updateWidth = () => {
       // Simple responsive logic: fill available width with padding, max 600px
-      const availableWidth = window.innerWidth - 80 // 40px padding on each side
+      // Reduce padding on mobile for more content space
+      const isMobile = window.innerWidth <= 768
+      const totalPadding = isMobile ? 60 : 80 // Less padding on mobile
+      const availableWidth = window.innerWidth - totalPadding
       const maxWidth = Math.min(600, availableWidth)
       setContainerWidth(maxWidth)
     }

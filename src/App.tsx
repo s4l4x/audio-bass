@@ -56,9 +56,9 @@ function App() {
     <Box style={{ 
       minHeight: '100vh', 
       position: 'relative', 
-      // More aggressive responsive padding to prevent overflow
-      paddingLeft: 'clamp(20px, 8vw, 40px)',
-      paddingRight: 'clamp(20px, 8vw, 40px)'
+      // Responsive padding - less on mobile for more content space
+      paddingLeft: 'clamp(16px, 6vw, 40px)',
+      paddingRight: 'clamp(16px, 6vw, 40px)'
     }}>
       {/* Debug Menu - Top Right */}
       <Box style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 100 }}>

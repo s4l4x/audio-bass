@@ -30,6 +30,12 @@ export const theme = createTheme({
     },
   },
   other: {
+    slider: {
+      thumb: {
+        size: '12px',
+        sizeMobile: '16px'
+      }
+    },
     adsr: {
       colors: {
         attack: '#51cf66',
@@ -39,7 +45,10 @@ export const theme = createTheme({
       },
       thumb: {
         size: 6,
-        sizeActive: 7
+        sizeActive: 7,
+        // Larger sizes for mobile touch interaction
+        sizeMobile: 9,
+        sizeActiveMobile: 10
       }
     },
     graphGrid: {

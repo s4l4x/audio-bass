@@ -33,15 +33,20 @@ export function GraphicalADSR({
   height = 200,
   onReset
 }: GraphicalADSRProps) {
-  // Make responsive - use a state to track window size
+  // Make responsive - use states to track window size and mobile status
   const [containerWidth, setContainerWidth] = useState(400)
+  const [isMobile, setIsMobile] = useState(false)
   
   useEffect(() => {
     const updateWidth = () => {
       // Simple responsive logic: fill available width with padding, max 600px
-      const availableWidth = window.innerWidth - 80 // 40px padding on each side
+      // Reduce padding on mobile for more content space
+      const isMobileNow = window.innerWidth <= 768
+      const totalPadding = isMobileNow ? 60 : 80 // Less padding on mobile
+      const availableWidth = window.innerWidth - totalPadding
       const maxWidth = Math.min(600, availableWidth)
       setContainerWidth(maxWidth)
+      setIsMobile(isMobileNow)
     }
     
     if (typeof window !== 'undefined') {
@@ -58,6 +63,10 @@ export function GraphicalADSR({
   const gridConfig = theme.other.graphGrid;
   const thumbConfig = theme.other.adsr.thumb;
   const isDark = computedColorScheme === 'dark';
+  
+  // Use theme-defined responsive thumb sizes
+  const dragHandleSize = isMobile ? thumbConfig.sizeMobile : thumbConfig.size
+  const dragHandleSizeActive = isMobile ? thumbConfig.sizeActiveMobile : thumbConfig.sizeActive
   const svgRef = useRef<SVGSVGElement>(null)
   const [dragState, setDragState] = useState<{
     isDragging: boolean
@@ -462,7 +471,7 @@ export function GraphicalADSR({
                 <circle
                   cx={point.x}
                   cy={point.y}
-                  r={dragState.dragId === point.id ? thumbConfig.sizeActive : thumbConfig.size}
+                  r={dragState.dragId === point.id ? dragHandleSizeActive : dragHandleSize}
                   fill={colors[point.id]}
                   style={{ 
                     cursor: dragState.dragId === point.id ? 'grabbing' : cursors[point.id],

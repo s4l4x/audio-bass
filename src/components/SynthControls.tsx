@@ -1,5 +1,6 @@
-import { Stack, Text, Slider, Select, Button, Group, Title } from '@mantine/core'
+import { Stack, Text, Slider, Select, Button, Group, Title, useMantineTheme } from '@mantine/core'
 import { IconPlayerPlayFilled } from '@tabler/icons-react'
+import { useMediaQuery } from '@mantine/hooks'
 import { EditableValue } from './EditableValue'
 import { ADSRControls } from './ADSRControls'
 import { WaveformVisualization } from './WaveformVisualization'
@@ -23,6 +24,19 @@ export function SynthControls({
   onStop,
   getWaveformData
 }: SynthControlsProps) {
+  const theme = useMantineTheme()
+  const isMobile = useMediaQuery('(max-width: 768px)')
+  const sliderSize = isMobile ? 'md' : 'sm'
+  
+  // Get responsive thumb size from theme
+  const thumbSize = isMobile ? theme.other.slider.thumb.sizeMobile : theme.other.slider.thumb.size
+  const sliderStyles = {
+    thumb: {
+      width: thumbSize,
+      height: thumbSize,
+    }
+  }
+  
   const handleADSRChange = (envelope: ADSRSettings) => {
     onSettingsChange({ envelope })
   }
@@ -78,7 +92,8 @@ export function SynthControls({
           min={0}
           max={300}
           step={1}
-          size="sm"
+          size={sliderSize}
+          styles={sliderStyles}
           label={(scaledValue) => {
             const frequency = Math.round(20 * Math.pow(10, scaledValue / 100))
             return `${frequency} Hz`
@@ -101,7 +116,8 @@ export function SynthControls({
           min={-30}
           max={6}
           step={1}
-          size="sm"
+          size={sliderSize}
+          styles={sliderStyles}
         />
       </div>
 
