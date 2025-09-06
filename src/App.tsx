@@ -53,15 +53,25 @@ function App() {
   }
 
   return (
-    <Box style={{ minHeight: '100vh', position: 'relative' }}>
+    <Box style={{ 
+      minHeight: '100vh', 
+      position: 'relative', 
+      // More aggressive responsive padding to prevent overflow
+      paddingLeft: 'clamp(20px, 8vw, 40px)',
+      paddingRight: 'clamp(20px, 8vw, 40px)'
+    }}>
       {/* Debug Menu - Top Right */}
       <Box style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 100 }}>
         <DebugMenu />
       </Box>
 
       {/* Main Content - Centered */}
-      <Center style={{ minHeight: '100vh' }}>
-        <Container size="sm">
+      <Center style={{ minHeight: '100vh', padding: '20px 0' }}>
+        <Container size="sm" style={{ 
+          width: '100%', 
+          maxWidth: '500px',
+          padding: '0'
+        }}>
           
           <Select
             label="Choose Instrument"
@@ -69,9 +79,10 @@ function App() {
             onChange={(value) => changeInstrumentType(value as InstrumentType)}
             data={instrumentOptions}
             mb="xl"
+            style={{ width: '100%' }}
           />
 
-          <Paper shadow="sm" p="lg" withBorder>
+          <Paper shadow="sm" p="md" withBorder style={{ width: '100%', boxSizing: 'border-box' }}>
             {renderInstrumentControls()}
           </Paper>
         </Container>

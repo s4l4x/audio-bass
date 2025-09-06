@@ -12,12 +12,34 @@ interface WaveformVisualizationProps {
 
 export function WaveformVisualization({
   getWaveformData,
-  width = 400,
+  width,
   height = 120,
   isGenerating = false,
   totalDuration = 5.0,
   adsrSettings
 }: WaveformVisualizationProps) {
+  // Make responsive - use a state to track window size
+  const [containerWidth, setContainerWidth] = useState(400)
+  
+  useEffect(() => {
+    const updateWidth = () => {
+      // Responsive width calculation
+      // For mobile: much more conservative width to prevent overflow
+      // For desktop: fixed 450px for optimal viewing
+      const isMobile = window.innerWidth <= 768
+      const maxWidth = isMobile ? Math.min(280, window.innerWidth - 120) : 450
+      setContainerWidth(maxWidth)
+    }
+    
+    if (typeof window !== 'undefined') {
+      updateWidth()
+      window.addEventListener('resize', updateWidth)
+      return () => window.removeEventListener('resize', updateWidth)
+    }
+  }, [])
+  
+  const actualWidth = width || containerWidth
+  
   const theme = useMantineTheme()
   const computedColorScheme = useComputedColorScheme('light')
   const gridConfig = theme.other.graphGrid
@@ -25,7 +47,7 @@ export function WaveformVisualization({
   const [waveformPath, setWaveformPath] = useState('')
 
   const padding = 15
-  const graphWidth = width - padding * 2
+  const graphWidth = actualWidth - padding * 2
   const graphHeight = height - padding * 2
   
   // Calculate actual duration from ADSR settings if provided, otherwise use totalDuration
@@ -90,14 +112,21 @@ export function WaveformVisualization({
         border: `1px solid var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '4' : '3'})`,
         borderRadius: '8px',
         padding: '4px',
-        backgroundColor: `var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '6' : '0'})`
+        backgroundColor: `var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '6' : '0'})`,
+        width: '100%',
+        maxWidth: '100%',
+        overflow: 'hidden'
       }}
     >
       <svg
-        width={width}
+        width={actualWidth}
         height={height}
+        viewBox={`0 0 ${actualWidth} ${height}`}
         style={{
-          userSelect: 'none'
+          userSelect: 'none',
+          width: '100%',
+          height: 'auto',
+          maxWidth: `${actualWidth}px`
         }}
       >
         {/* Grid lines */}
@@ -155,7 +184,7 @@ export function WaveformVisualization({
         {/* Loading indicator */}
         {isGenerating && (
           <text
-            x={width / 2}
+            x={actualWidth / 2}
             y={height / 2}
             textAnchor="middle"
             fontSize="12"

@@ -29,10 +29,31 @@ export function GraphicalADSR({
   settings, 
   onSettingsChange,
   ranges,
-  width = 400,
+  width,
   height = 200,
   onReset
 }: GraphicalADSRProps) {
+  // Make responsive - use a state to track window size
+  const [containerWidth, setContainerWidth] = useState(400)
+  
+  useEffect(() => {
+    const updateWidth = () => {
+      // Responsive width calculation
+      // For mobile: much more conservative width to prevent overflow
+      // For desktop: fixed 450px for optimal viewing
+      const isMobile = window.innerWidth <= 768
+      const maxWidth = isMobile ? Math.min(280, window.innerWidth - 120) : 450
+      setContainerWidth(maxWidth)
+    }
+    
+    if (typeof window !== 'undefined') {
+      updateWidth()
+      window.addEventListener('resize', updateWidth)
+      return () => window.removeEventListener('resize', updateWidth)
+    }
+  }, [])
+  
+  const actualWidth = width || containerWidth
   const theme = useMantineTheme();
   const computedColorScheme = useComputedColorScheme('light');
   const colors = theme.other.adsr.colors;
@@ -54,7 +75,7 @@ export function GraphicalADSR({
   const labelHeight = 20  // Space needed for labels above control points
   const padding = 15
   const topPadding = padding + labelHeight
-  const graphWidth = width - padding * 2
+  const graphWidth = actualWidth - padding * 2
   const graphHeight = height - topPadding - padding
   const gridSpacingY = graphHeight / 6 // 6 horizontal divisions
   
@@ -263,7 +284,10 @@ export function GraphicalADSR({
           borderRadius: '8px',
           padding: '4px',
           backgroundColor: `var(--mantine-color-${isDark ? 'dark' : 'gray'}-${isDark ? '6' : '0'})`,
-          position: 'relative'
+          position: 'relative',
+          width: '100%',
+          maxWidth: '100%',
+          overflow: 'hidden'
         }}
       >
         {/* Reset button positioned in top-right corner */}
@@ -288,10 +312,14 @@ export function GraphicalADSR({
         )}
         <svg
           ref={svgRef}
-          width={width}
+          width={actualWidth}
           height={height}
+          viewBox={`0 0 ${actualWidth} ${height}`}
           style={{ 
             cursor: dragState.isDragging ? 'grabbing' : 'default',
+            width: '100%',
+            height: 'auto',
+            maxWidth: `${actualWidth}px`,
             userSelect: 'none'
           }}
         >
