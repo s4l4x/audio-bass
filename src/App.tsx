@@ -69,7 +69,7 @@ function App() {
       <Center style={{ minHeight: '100vh', padding: '20px 0' }}>
         <Container size="sm" style={{ 
           width: '100%', 
-          maxWidth: '500px',
+          maxWidth: '640px', // Allow space for 600px graphs + padding
           padding: '0'
         }}>
           

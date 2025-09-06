@@ -23,11 +23,9 @@ export function WaveformVisualization({
   
   useEffect(() => {
     const updateWidth = () => {
-      // Responsive width calculation
-      // For mobile: much more conservative width to prevent overflow
-      // For desktop: fixed 450px for optimal viewing
-      const isMobile = window.innerWidth <= 768
-      const maxWidth = isMobile ? Math.min(280, window.innerWidth - 120) : 450
+      // Simple responsive logic: fill available width with padding, max 600px
+      const availableWidth = window.innerWidth - 80 // 40px padding on each side
+      const maxWidth = Math.min(600, availableWidth)
       setContainerWidth(maxWidth)
     }
     
