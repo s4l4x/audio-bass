@@ -171,14 +171,24 @@ export function GraphicalADSR({
     })
   }, [])
 
-  const handleMouseMove = useCallback((event: MouseEvent) => {
-    if (!dragState.isDragging || !dragState.dragId) return
-    
+  // Touch event handlers for mobile support
+  const handleTouchStart = useCallback((event: React.TouchEvent, pointId: string) => {
+    event.preventDefault()
+    event.stopPropagation()
     const rect = svgRef.current?.getBoundingClientRect()
-    if (!rect) return
+    if (!rect || !event.touches[0]) return
 
-    const x = event.clientX - rect.left
-    const y = event.clientY - rect.top
+    const touch = event.touches[0]
+    setDragState({
+      isDragging: true,
+      dragId: pointId,
+      startPos: { x: touch.clientX - rect.left, y: touch.clientY - rect.top }
+    })
+  }, [])
+
+  // Unified drag handling function used by both mouse and touch
+  const handleDragMove = useCallback((x: number, y: number) => {
+    if (!dragState.isDragging || !dragState.dragId) return
 
     // Convert back to ADSR values based on which point is being dragged
     const newSettings = { ...settings }
@@ -248,7 +258,36 @@ export function GraphicalADSR({
     onSettingsChange(newSettings)
   }, [dragState, settings, onSettingsChange, actualTotalDuration, graphWidth, graphHeight, padding, topPadding, attackMinTime, attackMaxTime, decayMinTime, decayMaxTime, sustainMinDuration, sustainMaxDuration, releaseMinTime, releaseMaxTime])
 
+  const handleMouseMove = useCallback((event: MouseEvent) => {
+    const rect = svgRef.current?.getBoundingClientRect()
+    if (!rect) return
+
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
+    handleDragMove(x, y)
+  }, [handleDragMove])
+
+  const handleTouchMove = useCallback((event: TouchEvent) => {
+    event.preventDefault() // Prevent scrolling and other touch behaviors
+    
+    const rect = svgRef.current?.getBoundingClientRect()
+    if (!rect || !event.touches[0]) return
+
+    const touch = event.touches[0]
+    const x = touch.clientX - rect.left
+    const y = touch.clientY - rect.top
+    handleDragMove(x, y)
+  }, [handleDragMove])
+
   const handleMouseUp = useCallback(() => {
+    setDragState({
+      isDragging: false,
+      dragId: null,
+      startPos: { x: 0, y: 0 }
+    })
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
     setDragState({
       isDragging: false,
       dragId: null,
@@ -268,13 +307,17 @@ export function GraphicalADSR({
     if (dragState.isDragging) {
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
+      document.addEventListener('touchmove', handleTouchMove, { passive: false })
+      document.addEventListener('touchend', handleTouchEnd)
       
       return () => {
         document.removeEventListener('mousemove', handleMouseMove)
         document.removeEventListener('mouseup', handleMouseUp)
+        document.removeEventListener('touchmove', handleTouchMove)
+        document.removeEventListener('touchend', handleTouchEnd)
       }
     }
-  }, [dragState.isDragging, handleMouseMove, handleMouseUp])
+  }, [dragState.isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd])
 
   return (
     <Box style={{ userSelect: 'none' }}>
@@ -320,7 +363,8 @@ export function GraphicalADSR({
             width: '100%',
             height: 'auto',
             maxWidth: `${actualWidth}px`,
-            userSelect: 'none'
+            userSelect: 'none',
+            touchAction: 'none'
           }}
         >
           {/* Grid lines */}
@@ -427,6 +471,7 @@ export function GraphicalADSR({
                     transition: 'r 150ms ease, opacity 150ms ease'
                   }}
                   onMouseDown={(e) => handleMouseDown(e, point.id)}
+                  onTouchStart={(e) => handleTouchStart(e, point.id)}
                   opacity={dragState.dragId === point.id ? 0.9 : 1}
                 />
                 <text
