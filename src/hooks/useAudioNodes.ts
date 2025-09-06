@@ -211,31 +211,43 @@ export function useAudioNodes() {
     }
 
     try {
+      console.log(`🔧 Updating settings for ${nodeId} (${node.type}):`, newSettings)
+      
       // Update our internal settings
       const updatedSettings = { ...node.settings, ...newSettings }
       
       // Transform settings for specific node types if needed
       const transformedSettings = transformSettingsForNodeType(node.type, newSettings)
+      console.log(`🔧 Transformed settings:`, transformedSettings)
       
       // Apply settings to the Tone.js instance
       const instance = node.instance
       for (const [key, value] of Object.entries(transformedSettings)) {
+        console.log(`🔍 Processing property: ${key} =`, value)
         if (instance[key] !== undefined) {
-          if (typeof instance[key] === 'object' && 'value' in instance[key]) {
-            // Handle Tone.js Param objects (like volume, frequency, etc.)
+          if (typeof instance[key] === 'object' && 'value' in instance[key] && typeof value === 'number') {
+            // Handle Tone.js Param objects (like volume, frequency, etc.) - setting numeric values
+            console.log(`🔧 Setting Tone.js Param ${key}.value =`, value)
             instance[key].value = value
           } else if (typeof value === 'object' && value !== null) {
             // Handle nested objects like oscillator, envelope
             if (typeof instance[key] === 'object' && instance[key] !== null) {
               for (const [nestedKey, nestedValue] of Object.entries(value)) {
                 if (instance[key][nestedKey] !== undefined) {
-                  if (typeof instance[key][nestedKey] === 'object' && 'value' in instance[key][nestedKey]) {
-                    // Nested Tone.js Param
+                  if (typeof instance[key][nestedKey] === 'object' && instance[key][nestedKey] !== null && 'value' in instance[key][nestedKey]) {
+                    // Nested Tone.js Param (like envelope.attack, envelope.decay, etc.)
+                    console.log(`🔧 Setting Tone.js Param ${key}.${nestedKey}.value =`, nestedValue)
                     instance[key][nestedKey].value = nestedValue
                   } else {
-                    // Direct nested property
+                    // Direct nested property - check if it's settable
                     try {
-                      instance[key][nestedKey] = nestedValue
+                      const descriptor = Object.getOwnPropertyDescriptor(instance[key], nestedKey)
+                      if (!descriptor || descriptor.set || descriptor.writable !== false) {
+                        console.log(`🔧 Setting direct property ${key}.${nestedKey} =`, nestedValue)
+                        instance[key][nestedKey] = nestedValue
+                      } else {
+                        console.warn(`⚠️ Property ${key}.${nestedKey} is read-only, skipping`)
+                      }
                     } catch (error) {
                       console.warn(`⚠️ Could not set ${key}.${nestedKey}:`, error)
                     }

@@ -379,12 +379,24 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
           setTimeout(() => setIsPlaying(false), 150)
         } else {
           // For synth style - sustained note
+          // Release any currently playing note first to prevent overlapping
+          if ('triggerRelease' in toneNode && isPlaying) {
+            console.log('🎹 Releasing current note before new attack')
+            toneNode.triggerRelease()
+          }
+          
           // Use the current frequency setting from the node
           const currentFrequency = node.settings.frequency || 440
           const noteToPlay = note || currentFrequency
           console.log('🎹 Triggering sustained note (triggerAttack):', noteToPlay)
           toneNode.triggerAttack(noteToPlay)
           setIsPlaying(true)
+          
+          // Regenerate waveform data after triggering
+          setTimeout(async () => {
+            const newWaveformData = await generateWaveformData()
+            setWaveformData(newWaveformData)
+          }, 100)
         }
       } else {
         console.warn('⚠️ Node not triggerable:', nodeId)

@@ -494,6 +494,7 @@ export function GraphicalADSR({
                   }}
                   onMouseDown={(e) => handleMouseDown(e, point.id)}
                   onTouchStart={(e) => handleTouchStart(e, point.id)}
+                  onContextMenu={(e) => e.preventDefault()}
                   opacity={dragState.dragId === point.id ? 0.9 : 1}
                 />
                 <text
