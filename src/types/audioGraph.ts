@@ -112,7 +112,7 @@ export interface GraphPreset extends AudioGraphConfig {
 // Legacy compatibility types (to be phased out)
 export type LegacyInstrumentType = 'synth' | 'membraneSynth'
 
-// Helper type for backward compatibility with existing useInstrument
+// Helper type for backward compatibility with legacy instrument system
 export interface LegacyInstrumentConfig {
   type: LegacyInstrumentType
   name: string

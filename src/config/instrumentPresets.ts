@@ -1,6 +1,6 @@
 import type { AudioGraphConfig } from '../types/audioGraph'
 
-// Graph configuration that replicates the current useInstrument Synth behavior
+// Graph configuration for basic synthesizer
 export const synthPreset: AudioGraphConfig = {
   name: 'Basic Synth',
   type: 'instrument',
@@ -10,7 +10,7 @@ export const synthPreset: AudioGraphConfig = {
         type: 'Synth',
         trigger: true,
         settings: {
-          // Default settings from useInstrument getDefaultSettings
+          // Default settings for basic synth
           frequency: 440,
           volume: -6,
           oscillator: { type: 'sine' },
@@ -43,7 +43,7 @@ export const synthPreset: AudioGraphConfig = {
   }
 }
 
-// Graph configuration that replicates the current useInstrument MembraneSynth behavior  
+// Graph configuration for bass kick drum  
 export const bassKickPreset: AudioGraphConfig = {
   name: 'Bass Kick',
   type: 'instrument',
@@ -53,7 +53,7 @@ export const bassKickPreset: AudioGraphConfig = {
         type: 'MembraneSynth',
         trigger: true,
         settings: {
-          // Default settings from useInstrument getDefaultSettings
+          // Default settings for bass kick drum
           volume: -6,
           pitchDecay: 0.05,
           octaves: 10,
