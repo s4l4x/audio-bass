@@ -132,15 +132,14 @@ export function useInstrument(initialType: InstrumentType) {
   const instrumentRef = useRef<Tone.Synth | Tone.MembraneSynth | null>(null)
   const waveformRef = useRef<Tone.Recorder | null>(null)
   const lastRecordingRef = useRef<Tone.ToneAudioBuffer | null>(null)
-  const [waveformDataVersion, setWaveformDataVersion] = useState(0)
 
   // Helper function to calculate total ADSR duration
-  const calculateADSRDuration = (envelope: ADSRSettings): number => {
+  const calculateADSRDuration = useCallback((envelope: ADSRSettings): number => {
     return envelope.attack + envelope.decay + envelope.sustainDuration + envelope.release
-  }
+  }, [])
 
   // Generic waveform generation for both instrument types
-  const generateWaveform = async (type: InstrumentType, settings: InstrumentSettings) => {
+  const generateWaveform = useCallback(async (type: InstrumentType, settings: InstrumentSettings) => {
     try {
       // Calculate buffer duration based on instrument type
       let bufferDuration = 1.0 // Default fallback
@@ -220,11 +219,10 @@ export function useInstrument(initialType: InstrumentType) {
       }, bufferDuration)
       
       lastRecordingRef.current = buffer
-      setWaveformDataVersion(prev => prev + 1)
     } catch (error) {
       console.error('Error generating waveform:', error)
     }
-  }
+  }, [calculateADSRDuration])
 
   // Initialize instrument
   useEffect(() => {
@@ -263,7 +261,7 @@ export function useInstrument(initialType: InstrumentType) {
         waveformRef.current.dispose()
       }
     }
-  }, [config.type])
+  }, [config.type, config.settings])
 
   // Apply settings changes
   useEffect(() => {
@@ -280,7 +278,7 @@ export function useInstrument(initialType: InstrumentType) {
         generateWaveform(config.type, config.settings)
       }, 100)
     }
-  }, [config.type])
+  }, [config.type, config.settings, generateWaveform])
 
   const changeInstrumentType = useCallback((type: InstrumentType) => {
     setConfig(prev => ({
@@ -306,7 +304,7 @@ export function useInstrument(initialType: InstrumentType) {
       
       return updatedConfig
     })
-  }, [])
+  }, [generateWaveform])
 
   // Temporarily disable real-time updates to focus on basic functionality
   // const debounceTimeoutRef = useRef<NodeJS.Timeout>()
@@ -364,7 +362,7 @@ export function useInstrument(initialType: InstrumentType) {
     } else {
       console.log('ℹ️ Membrane synth does not need release (one-shot)')
     }
-  }, [config.type, isPlaying])
+  }, [config.type])
 
   const triggerAttackRelease = useCallback(async (note?: string | number, duration: string = '8n') => {
     if (!instrumentRef.current) return
@@ -404,7 +402,7 @@ export function useInstrument(initialType: InstrumentType) {
     }
     
     return null
-  }, [config.type, waveformDataVersion])
+  }, [])
 
   return {
     config,
