@@ -1,15 +1,6 @@
 import { useState, useCallback, useRef } from 'react'
 import type { AudioConnection, NodeInstance, SignalType } from '../types/audioGraph'
-
-// Helper function to parse connection strings (e.g., "osc1.output" -> {nodeId: "osc1", port: "output"})
-const parseConnectionString = (connectionStr: string): { nodeId: string; port: string } => {
-  const parts = connectionStr.split('.')
-  if (parts.length === 1) {
-    // Default port names
-    return { nodeId: parts[0], port: 'output' }
-  }
-  return { nodeId: parts[0], port: parts[1] }
-}
+import { parseConnectionString, GraphValidation } from '../utils/graphUtils'
 
 // Helper to get the actual Tone.js connection point from a node
 const getConnectionPoint = (node: NodeInstance, port: string, isInput: boolean): any => {
@@ -69,8 +60,8 @@ export function useGraphConnections(nodes: Map<string, NodeInstance>) {
       return false
     }
     
-    // Prevent self-connections
-    if (fromNode.id === toNode.id) {
+    // Prevent self-connections using utility
+    if (GraphValidation.wouldCreateCycle(fromStr, toStr)) {
       console.warn('⚠️ Cannot connect node to itself:', fromNode.id)
       return false
     }
@@ -107,8 +98,8 @@ export function useGraphConnections(nodes: Map<string, NodeInstance>) {
     
     try {
       // Get the actual Tone.js connection points
-      const sourcePoint = getConnectionPoint(fromNode, from.port, false)
-      const destPoint = getConnectionPoint(toNode, to.port, true)
+      const sourcePoint = getConnectionPoint(fromNode, from.property, false)
+      const destPoint = getConnectionPoint(toNode, to.property, true)
       
       if (!sourcePoint || !destPoint) {
         console.error('❌ Cannot get connection points:', fromStr, toStr)
@@ -139,8 +130,8 @@ export function useGraphConnections(nodes: Map<string, NodeInstance>) {
       updateConnectionsRef(newConnections)
       
       // Update node input/output tracking
-      toNode.inputs.set(to.port, fromNode.id)
-      fromNode.outputs.set(from.port, toNode.id)
+      toNode.inputs.set(to.property, fromNode.id)
+      fromNode.outputs.set(from.property, toNode.id)
       
       return true
       
@@ -185,10 +176,10 @@ export function useGraphConnections(nodes: Map<string, NodeInstance>) {
       const toNode = nodes.get(to.nodeId)
       
       if (fromNode) {
-        fromNode.outputs.delete(from.port)
+        fromNode.outputs.delete(from.property)
       }
       if (toNode) {
-        toNode.inputs.delete(to.port)
+        toNode.inputs.delete(to.property)
       }
       
       return true

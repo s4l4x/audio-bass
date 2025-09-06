@@ -1,15 +1,6 @@
 import { useState, useCallback, useRef } from 'react'
 import type { ModulationRoute, NodeInstance } from '../types/audioGraph'
-
-// Helper function to parse parameter paths (e.g., "filter.cutoff" -> {nodeId: "filter", param: "cutoff"})
-const parseParameterPath = (paramPath: string): { nodeId: string; param: string } => {
-  const parts = paramPath.split('.')
-  if (parts.length === 1) {
-    // If no dot, assume it's a nodeId with a default parameter
-    return { nodeId: parts[0], param: 'value' }
-  }
-  return { nodeId: parts[0], param: parts[1] }
-}
+import { parseParameterPath } from '../utils/graphUtils'
 
 // Helper to get the actual Tone.js parameter from a node
 const getParameter = (node: NodeInstance, paramName: string): any => {
@@ -92,8 +83,8 @@ export function useModulationMatrix(nodes: Map<string, NodeInstance>) {
     
     try {
       // Get the source parameter (CV output)
-      const sourceParam = getParameter(sourceNode, sourceParts.param)
-      const destParam = getParameter(destNode, destParts.param)
+      const sourceParam = getParameter(sourceNode, sourceParts.property)
+      const destParam = getParameter(destNode, destParts.property)
       
       if (!sourceParam || !destParam) {
         console.error('❌ Cannot create modulation route - parameters not found')
@@ -163,8 +154,8 @@ export function useModulationMatrix(nodes: Map<string, NodeInstance>) {
         if (!sourceNode || !destNode) continue
         
         // Get current values
-        const sourceParam = getParameter(sourceNode, sourceParts.param)
-        const destParam = getParameter(destNode, destParts.param)
+        const sourceParam = getParameter(sourceNode, sourceParts.property)
+        const destParam = getParameter(destNode, destParts.property)
         
         if (!sourceParam || !destParam) continue
         
