@@ -1,4 +1,5 @@
 import { Stack, Text, Slider, Select, Button, Group, Title } from '@mantine/core'
+import { IconPlayerPlayFilled } from '@tabler/icons-react'
 import { EditableValue } from './EditableValue'
 import { ADSRControls } from './ADSRControls'
 import { WaveformVisualization } from './WaveformVisualization'
@@ -46,12 +47,10 @@ export function SynthControls({
             padding: 0
           }}
         >
-          <div style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: isPlaying ? 'white' : 'var(--mantine-color-blue-6)'
-          }} />
+          <IconPlayerPlayFilled 
+            size={14}
+            color={isPlaying ? 'white' : 'var(--mantine-color-blue-6)'}
+          />
         </Button>
       </Group>
 
