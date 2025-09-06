@@ -30,7 +30,7 @@ npm run preview    # Preview production build locally
 ```
 src/
 ├── components/    # Reusable UI components
-├── hooks/         # Custom React hooks (useSynth, etc.)
+├── hooks/         # Custom React hooks (useAudioGraph, useADSR, etc.)
 ├── utils/         # Utility functions
 ├── types/         # TypeScript type definitions
 ├── App.tsx        # Main application component
@@ -39,7 +39,7 @@ src/
 
 ### Key Patterns
 
-- **Custom Hooks**: Audio functionality encapsulated in hooks like `useSynth` for state management and Tone.js integration
+- **Custom Hooks**: Audio functionality encapsulated in hooks like `useAudioGraph` for state management and Tone.js integration
 - **MantineProvider**: Configured in main.tsx for consistent theming and components
 - **Audio Context**: Properly initialized with `Tone.start()` to handle browser autoplay restrictions
 - **Real-time Updates**: Slider components update Tone.js parameters in real-time during playback
@@ -61,21 +61,22 @@ Build a modular audio workstation supporting all Tone.js instruments through con
 
 ### Current State Analysis
 
-- `useInstrument.ts` - rigid implementation handling only Synth + MembraneSynth
-- `useSynth.ts` - legacy code, appears unused
+- Previous legacy hooks have been replaced by the audio graph system
 - Need to support 20+ Tone.js instruments with complex routing (modulation, parallel processing, feedback loops)
 
-### Phase 1: Foundation & Cleanup (Immediate)
+### ✅ Phase 1: Foundation & Cleanup (COMPLETED)
 
-1. **Remove legacy code**: Delete unused `useSynth.ts`
-2. **Preserve current functionality**: Keep existing Synth/MembraneSynth working
-3. **Create core graph infrastructure**:
+1. ✅ **Remove legacy code**: Completed - removed `useInstrument.ts` and `useSynth.ts`
+2. ✅ **Preserve current functionality**: Existing Synth/MembraneSynth working via audio graph system
+3. ✅ **Create core graph infrastructure**:
    ```typescript
-   useAudioGraph(config) // Main graph engine
-   ├── useAudioNodes(nodeDefinitions) // Tone.js component management
-   ├── useGraphConnections(connections) // Signal routing
-   └── useModulationMatrix(routings) // Parameter modulation
+   useAudioGraph(config) // Main graph engine ✅ Implemented
+   ├── useAudioNodes(nodeDefinitions) // Tone.js component management ✅ Implemented
+   ├── useGraphConnections(connections) // Signal routing ✅ Implemented
+   └── useModulationMatrix(routings) // Parameter modulation ✅ Implemented
    ```
+
+**Phase 1 Status**: All objectives completed. The application successfully uses the new audio graph system for both instruments with full functionality preservation.
 
 ### Phase 2: Graph System (Next Sprint)
 

@@ -291,7 +291,7 @@ export function useAudioNodes() {
     } catch (error) {
       console.error('❌ Failed to update node settings:', nodeId, error)
     }
-  }, [updateNodesRef])
+  }, [updateNodesRef, initializeNodeInstance])
 
   // Get node by ID
   const getNodeById = useCallback((nodeId: string): NodeInstance | undefined => {
