@@ -2,7 +2,7 @@ import { Menu, ActionIcon, Modal, Code } from '@mantine/core'
 import { IconDots, IconBug, IconTestPipe } from '@tabler/icons-react'
 import { useDisclosure } from '@mantine/hooks'
 import { useState } from 'react'
-import * as Tone from 'tone'
+import { loadTone } from '../utils/toneLoader'
 import { AppearanceControls } from './AppearanceControls'
 
 export function DebugMenu() {
@@ -13,7 +13,9 @@ export function DebugMenu() {
 
   const gatherDebugInfo = async () => {
     try {
-      // Ensure audio context is started
+      // Load Tone.js and ensure audio context is started
+      const Tone = await loadTone()
+      
       if (Tone.getContext().state !== 'running') {
         await Tone.start()
       }
@@ -54,7 +56,9 @@ export function DebugMenu() {
       setAudioStatus('Testing audio...')
       console.log('🧪 Audio test started')
       
-      // Ensure audio context is running
+      // Load Tone.js and ensure audio context is running
+      const Tone = await loadTone()
+      
       if (Tone.getContext().state !== 'running') {
         console.log('🔧 Starting audio context for test...')
         await Tone.start()

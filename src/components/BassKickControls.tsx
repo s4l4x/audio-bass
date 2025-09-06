@@ -1,5 +1,5 @@
-import { Stack, Text, Slider, Select, Button, Group, Title, useMantineTheme } from '@mantine/core'
-import { IconPlayerPlayFilled } from '@tabler/icons-react'
+import { Stack, Text, Slider, Select, Group, Title, useMantineTheme } from '@mantine/core'
+import { PlayButton } from './PlayButton'
 import { useMediaQuery } from '@mantine/hooks'
 import { EditableValue } from './EditableValue'
 import { ADSRControls } from './ADSRControls'
@@ -43,26 +43,15 @@ export function BassKickControls({
     <Stack gap="md">
       <Group justify="space-between" align="center">
         <Title order={4} size="xl" fw="400">Bass Kick</Title>
-        <Button 
-          w={30}
-          h={30}
-          onClick={onTrigger}
-          variant={isPlaying ? "filled" : "outline"}
+        <PlayButton
+          triggerType="pulse"
+          isPlaying={isPlaying}
+          onTrigger={onTrigger}
           color="red"
           size="xs"
-          style={{ 
-            outline: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0
-          }}
-        >
-          <IconPlayerPlayFilled 
-            size={14}
-            color={isPlaying ? 'white' : 'var(--mantine-color-red-6)'}
-          />
-        </Button>
+          width={30}
+          height={30}
+        />
       </Group>
 
       <WaveformVisualization

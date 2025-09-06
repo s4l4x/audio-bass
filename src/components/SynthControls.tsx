@@ -1,5 +1,5 @@
-import { Stack, Text, Slider, Select, Button, Group, Title, useMantineTheme } from '@mantine/core'
-import { IconPlayerPlayFilled } from '@tabler/icons-react'
+import { Stack, Text, Slider, Select, Group, Title, useMantineTheme } from '@mantine/core'
+import { PlayButton } from './PlayButton'
 import { useMediaQuery } from '@mantine/hooks'
 import { EditableValue } from './EditableValue'
 import { ADSRControls } from './ADSRControls'
@@ -45,27 +45,17 @@ export function SynthControls({
     <Stack gap="md">
       <Group justify="space-between" align="center">
         <Title order={4} size="xl" fw="500">Synth</Title>
-        <Button 
-          w={30}
-          h={30}
-          onMouseDown={() => onPlay()}
-          onMouseUp={() => onStop()}
-          onMouseLeave={() => onStop()}
-          variant={isPlaying ? "filled" : "outline"}
+        <PlayButton
+          triggerType="sustained"
+          isPlaying={isPlaying}
+          onTrigger={() => {}} // Not used for sustained type
+          onPlay={onPlay}
+          onStop={onStop}
+          color="blue"
           size="xs"
-          style={{ 
-            outline: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0
-          }}
-        >
-          <IconPlayerPlayFilled 
-            size={14}
-            color={isPlaying ? 'white' : 'var(--mantine-color-blue-6)'}
-          />
-        </Button>
+          width={30}
+          height={30}
+        />
       </Group>
 
       <WaveformVisualization
@@ -76,7 +66,7 @@ export function SynthControls({
       <div>
         <EditableValue
           label="Frequency"
-          value={settings.frequency}
+          value={settings.frequency || 440}
           unit="Hz"
           onValueChange={(value) => onSettingsChange({ frequency: value })}
           formatDisplay={(value) => value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toString()}
@@ -84,7 +74,7 @@ export function SynthControls({
           max={20000}
         />
         <Slider
-          value={Math.log10(settings.frequency / 20) * 100}
+          value={Math.log10((settings.frequency || 440) / 20) * 100}
           onChange={(scaledValue) => {
             const frequency = Math.round(20 * Math.pow(10, scaledValue / 100))
             onSettingsChange({ frequency })

@@ -180,7 +180,8 @@ export function GraphicalADSR({
 
   // Touch event handlers for mobile support
   const handleTouchStart = useCallback((event: React.TouchEvent, pointId: string) => {
-    event.preventDefault()
+    // Don't preventDefault here - React touch events are passive by default
+    // The document-level touchmove handler will handle preventDefault
     event.stopPropagation()
     const rect = svgRef.current?.getBoundingClientRect()
     if (!rect || !event.touches[0]) return
@@ -287,6 +288,7 @@ export function GraphicalADSR({
   }, [handleDragMove])
 
   const handleMouseUp = useCallback(() => {
+    // Keep the current liveSettings as the final position
     setDragState({
       isDragging: false,
       dragId: null,
@@ -295,6 +297,7 @@ export function GraphicalADSR({
   }, [])
 
   const handleTouchEnd = useCallback(() => {
+    // Keep the current liveSettings as the final position  
     setDragState({
       isDragging: false,
       dragId: null,
@@ -302,12 +305,24 @@ export function GraphicalADSR({
     })
   }, [])
 
-  // Sync live settings with actual settings when not dragging
+  // Sync live settings with actual settings when not dragging, but only if they're different
   useEffect(() => {
     if (!dragState.isDragging) {
-      setLiveSettings(settings)
+      // Only sync if the settings are significantly different (external change)
+      const isDifferent = Math.abs(liveSettings.attack - settings.attack) > 0.001 ||
+                          Math.abs(liveSettings.decay - settings.decay) > 0.001 ||
+                          Math.abs(liveSettings.sustain - settings.sustain) > 0.001 ||
+                          Math.abs(liveSettings.release - settings.release) > 0.001 ||
+                          Math.abs(liveSettings.sustainDuration - settings.sustainDuration) > 0.001
+      
+      if (isDifferent) {
+        const timer = setTimeout(() => {
+          setLiveSettings(settings)
+        }, 100)
+        return () => clearTimeout(timer)
+      }
     }
-  }, [settings, dragState.isDragging])
+  }, [settings, dragState.isDragging, liveSettings])
   
   // Add document-level event listeners when dragging
   useEffect(() => {
@@ -315,7 +330,7 @@ export function GraphicalADSR({
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
       document.addEventListener('touchmove', handleTouchMove, { passive: false })
-      document.addEventListener('touchend', handleTouchEnd)
+      document.addEventListener('touchend', handleTouchEnd, { passive: false })
       
       return () => {
         document.removeEventListener('mousemove', handleMouseMove)

@@ -52,6 +52,8 @@ export function useGraphConnections(nodes: Map<string, NodeInstance>) {
     
     if (!fromNode || !toNode) {
       console.warn('⚠️ Cannot validate connection - nodes not found:', from.nodeId, to.nodeId)
+      console.log('📋 Available nodes:', Array.from(nodes.keys()))
+      console.log('🔍 Looking for:', from.nodeId, '(found:', !!fromNode, '), ', to.nodeId, '(found:', !!toNode, ')')
       return false
     }
     

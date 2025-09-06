@@ -1,9 +1,14 @@
 import { useState, useCallback, useRef } from 'react'
-import * as Tone from 'tone'
+import { loadTone, getToneModule } from '../utils/toneLoader'
 import type { AudioNodeType, AudioNodeDefinition, NodeInstance } from '../types/audioGraph'
 
 // Factory function to create Tone.js instances based on node type
 const createToneInstance = (type: AudioNodeType, settings: Record<string, any> = {}): any => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const Tone = getToneModule()
+  if (!Tone) {
+    throw new Error('Tone.js not loaded yet')
+  }
+
   console.log('🏭 Creating Tone.js instance:', type, settings)
   
   try {
@@ -95,8 +100,42 @@ const createToneInstance = (type: AudioNodeType, settings: Record<string, any> =
   }
 }
 
+// Transform settings for specific node types to match Tone.js expectations
+const transformSettingsForNodeType = (nodeType: AudioNodeType, settings: Record<string, any>): Record<string, any> => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const transformed = { ...settings }
+
+  // Handle MembraneSynth specific transformations
+  if (nodeType === 'MembraneSynth') {
+    // Convert oscillatorType to oscillator.type structure
+    if ('oscillatorType' in settings) {
+      console.log('🔧 Transforming oscillatorType for MembraneSynth:', settings.oscillatorType)
+      transformed.oscillator = { 
+        ...transformed.oscillator, 
+        type: settings.oscillatorType 
+      }
+      // Remove the original flat property since we've nested it
+      delete transformed.oscillatorType
+    }
+  }
+
+  // Handle regular Synth transformations
+  if (nodeType === 'Synth') {
+    // Convert oscillatorType to oscillator.type structure
+    if ('oscillatorType' in settings) {
+      transformed.oscillator = { 
+        ...transformed.oscillator, 
+        type: settings.oscillatorType 
+      }
+      // Remove the original flat property since we've nested it
+      delete transformed.oscillatorType
+    }
+  }
+
+  return transformed
+}
+
 export function useAudioNodes() {
-  const [, setNodes] = useState<Map<string, NodeInstance>>(new Map())
+  const [nodes, setNodes] = useState<Map<string, NodeInstance>>(new Map())
   const nodesRef = useRef<Map<string, NodeInstance>>(new Map())
 
   // Keep ref in sync with state
@@ -105,19 +144,17 @@ export function useAudioNodes() {
     setNodes(new Map(newNodes)) // Create new Map to trigger re-renders
   }, [])
 
-  // Create a new audio node
+  // Create a new audio node (lazy initialization - Tone.js instance created on first use)
   const createNode = useCallback(async (nodeId: string, definition: AudioNodeDefinition): Promise<NodeInstance | null> => {
-    console.log('🔧 Creating node:', nodeId, definition)
+    console.log('🔧 Creating node placeholder:', nodeId, definition)
     
     try {
-      // Create the Tone.js instance
-      const instance = createToneInstance(definition.type, definition.settings)
-      
-      // Create the node instance wrapper
+      // Create the node instance wrapper WITHOUT creating the Tone.js instance yet
+      // This avoids AudioContext initialization during page load
       const nodeInstance: NodeInstance = {
         id: nodeId,
         type: definition.type,
-        instance,
+        instance: null, // Will be lazily created on first access
         settings: definition.settings || {},
         inputs: new Map(),
         outputs: new Map(),
@@ -129,7 +166,7 @@ export function useAudioNodes() {
       newNodes.set(nodeId, nodeInstance)
       updateNodesRef(newNodes)
       
-      console.log('✅ Node created successfully:', nodeId)
+      console.log('✅ Node placeholder created successfully:', nodeId)
       return nodeInstance
       
     } catch (error) {
@@ -138,11 +175,38 @@ export function useAudioNodes() {
     }
   }, [updateNodesRef])
 
+  // Lazy initialize a node's Tone.js instance
+  const initializeNodeInstance = useCallback(async (nodeInstance: NodeInstance): Promise<boolean> => {
+    if (nodeInstance.instance !== null || nodeInstance.isDisposed) {
+      return true // Already initialized or disposed
+    }
+
+    try {
+      console.log('🏭 Lazy initializing Tone.js instance for:', nodeInstance.id)
+      
+      // Load Tone.js dynamically if not already loaded
+      await loadTone()
+      
+      nodeInstance.instance = createToneInstance(nodeInstance.type, nodeInstance.settings)
+      
+      // If this is a trigger node, connect it to destination
+      if (nodeInstance.instance && typeof nodeInstance.instance.toDestination === 'function') {
+        nodeInstance.instance.toDestination()
+        console.log('✅ Connected lazy node to destination:', nodeInstance.id)
+      }
+      
+      return true
+    } catch (error) {
+      console.error('❌ Failed to lazy initialize node:', nodeInstance.id, error)
+      return false
+    }
+  }, [])
+
   // Update node settings
   const updateNodeSettings = useCallback((nodeId: string, newSettings: Record<string, any>) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const node = nodesRef.current.get(nodeId)
     if (!node || node.isDisposed) {
-      console.warn('⚠️ Cannot update settings for non-existent or disposed node:', nodeId)
+      console.warn('⚠️ Cannot update settings for non-existent or disposed node:', nodeId, 'Available nodes:', Array.from(nodesRef.current.keys()))
       return
     }
 
@@ -150,16 +214,42 @@ export function useAudioNodes() {
       // Update our internal settings
       const updatedSettings = { ...node.settings, ...newSettings }
       
+      // Transform settings for specific node types if needed
+      const transformedSettings = transformSettingsForNodeType(node.type, newSettings)
+      
       // Apply settings to the Tone.js instance
       const instance = node.instance
-      for (const [key, value] of Object.entries(newSettings)) {
+      for (const [key, value] of Object.entries(transformedSettings)) {
         if (instance[key] !== undefined) {
           if (typeof instance[key] === 'object' && 'value' in instance[key]) {
             // Handle Tone.js Param objects (like volume, frequency, etc.)
             instance[key].value = value
+          } else if (typeof value === 'object' && value !== null) {
+            // Handle nested objects like oscillator, envelope
+            if (typeof instance[key] === 'object' && instance[key] !== null) {
+              for (const [nestedKey, nestedValue] of Object.entries(value)) {
+                if (instance[key][nestedKey] !== undefined) {
+                  if (typeof instance[key][nestedKey] === 'object' && 'value' in instance[key][nestedKey]) {
+                    // Nested Tone.js Param
+                    instance[key][nestedKey].value = nestedValue
+                  } else {
+                    // Direct nested property
+                    try {
+                      instance[key][nestedKey] = nestedValue
+                    } catch (error) {
+                      console.warn(`⚠️ Could not set ${key}.${nestedKey}:`, error)
+                    }
+                  }
+                }
+              }
+            }
           } else {
             // Handle direct properties
-            instance[key] = value
+            try {
+              instance[key] = value
+            } catch (error) {
+              console.warn(`⚠️ Could not set ${key}:`, error)
+            }
           }
         }
       }
@@ -237,12 +327,13 @@ export function useAudioNodes() {
   }, [updateNodesRef])
 
   return {
-    nodes: nodesRef.current,
+    nodes: nodes,
     createNode,
     updateNodeSettings,
     getNodeById,
     disposeNode,
     getAllNodes,
-    clearAllNodes
+    clearAllNodes,
+    initializeNodeInstance
   }
 }

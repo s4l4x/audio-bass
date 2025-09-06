@@ -1,4 +1,4 @@
-import * as Tone from 'tone'
+// Note: Tone types are now loaded dynamically to prevent AudioContext warnings
 import type { ADSRSettings } from '../hooks/useADSR'
 
 export type InstrumentType = 'synth' | 'membraneSynth'
@@ -26,5 +26,5 @@ export interface InstrumentConfig<T extends InstrumentSettings = InstrumentSetti
   type: InstrumentType
   name: string
   settings: T
-  instrument?: Tone.Synth | Tone.MembraneSynth | Tone.AMSynth | Tone.FMSynth
+  instrument?: any // Tone.Synth | Tone.MembraneSynth | Tone.AMSynth | Tone.FMSynth
 }
