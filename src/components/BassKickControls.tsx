@@ -42,7 +42,7 @@ export function BassKickControls({
   return (
     <Stack gap="md">
       <Group justify="space-between" align="center">
-        <Title order={4} size="md" fw="500">Bass Kick</Title>
+        <Title order={4} size="xl" fw="400">Bass Kick</Title>
         <Button 
           w={30}
           h={30}

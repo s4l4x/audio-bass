@@ -2,7 +2,7 @@ import { createTheme } from '@mantine/core';
 
 export const theme = createTheme({
   fontFamily: 'Oxanium, system-ui, Avenir, Helvetica, Arial, sans-serif',
-  headings: { fontFamily: 'Orbitron, sans-serif' },
+  headings: { fontFamily: 'Major Mono Display, monospace' },
   components: {
     Slider: {
       styles: {

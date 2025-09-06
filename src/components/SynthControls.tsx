@@ -44,7 +44,7 @@ export function SynthControls({
   return (
     <Stack gap="md">
       <Group justify="space-between" align="center">
-        <Title order={4} size="md" fw="500">Synth</Title>
+        <Title order={4} size="xl" fw="500">Synth</Title>
         <Button 
           w={30}
           h={30}
