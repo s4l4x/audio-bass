@@ -1,4 +1,4 @@
-import { Stack, Center, Text, Title, Box, Transition, LoadingOverlay, useMantineColorScheme, Group } from '@mantine/core'
+import { Stack, Center, Text, Title, Box, Transition, useMantineColorScheme, Group } from '@mantine/core'
 import { IconPlayerPlayFilled } from '@tabler/icons-react'
 import { useState } from 'react'
 import { DebugMenu } from './DebugMenu'
@@ -115,6 +115,11 @@ export function InitializationScreen({ onInitialize }: InitializationScreenProps
                       transition: 'all 0.2s ease',
                       overflow: 'hidden',
                       opacity: isInitializing ? 0.7 : 1,
+                      // Mobile touch styling
+                      WebkitTapHighlightColor: 'transparent',
+                      WebkitTouchCallout: 'none',
+                      outline: 'none',
+                      userSelect: 'none',
                     }}
                     onMouseEnter={(e) => {
                       if (!isInitializing) {
@@ -125,6 +130,24 @@ export function InitializationScreen({ onInitialize }: InitializationScreenProps
                     onMouseLeave={(e) => {
                       if (!isInitializing) {
                         e.currentTarget.style.transform = 'translateY(0)'
+                        e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)'
+                      }
+                    }}
+                    onTouchStart={(e) => {
+                      if (!isInitializing) {
+                        e.currentTarget.style.transform = 'translateY(-1px) scale(0.98)'
+                        e.currentTarget.style.boxShadow = '0 6px 24px rgba(0, 0, 0, 0.2)'
+                      }
+                    }}
+                    onTouchEnd={(e) => {
+                      if (!isInitializing) {
+                        e.currentTarget.style.transform = 'translateY(0) scale(1)'
+                        e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)'
+                      }
+                    }}
+                    onTouchCancel={(e) => {
+                      if (!isInitializing) {
+                        e.currentTarget.style.transform = 'translateY(0) scale(1)'
                         e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)'
                       }
                     }}
