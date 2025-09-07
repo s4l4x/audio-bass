@@ -50,17 +50,7 @@ export function PlayButton({
     const handlePulseTrigger = async () => {
       console.log('🥁 Pulse trigger - one-shot')
       
-      // Start audio context synchronously within user gesture
-      try {
-        const { loadTone } = await import('../utils/toneLoader')
-        const Tone = await loadTone()
-        if (Tone.getContext().state !== 'running') {
-          console.log('🔊 Starting AudioContext synchronously...')
-          await Tone.start()
-        }
-      } catch (error) {
-        console.warn('⚠️ Could not start AudioContext:', error)
-      }
+      // Audio context should already be initialized
       
       onTrigger()
     }
@@ -89,17 +79,7 @@ export function PlayButton({
   const handleSustainedStart = async () => {
     console.log('🎹 Sustained start - starting note')
     
-    // Start audio context synchronously within user gesture
-    try {
-      const { loadTone } = await import('../utils/toneLoader')
-      const Tone = await loadTone()
-      if (Tone.getContext().state !== 'running') {
-        console.log('🔊 Starting AudioContext synchronously...')
-        await Tone.start()
-      }
-    } catch (error) {
-      console.warn('⚠️ Could not start AudioContext:', error)
-    }
+    // Audio context should already be initialized
     
     onPlay?.()
   }

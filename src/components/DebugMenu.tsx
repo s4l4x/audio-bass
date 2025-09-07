@@ -108,7 +108,7 @@ export function DebugMenu() {
         </Code>
       </Modal>
 
-      <Menu shadow="md" width={280}>
+      <Menu shadow="md" width={280} zIndex={1002}>
         <Menu.Target>
           <ActionIcon variant="subtle" size="lg" color="gray">
             <IconDots size={20} />

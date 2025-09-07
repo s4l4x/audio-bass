@@ -1,14 +1,17 @@
-import { Container, Center, Select, Box, Paper } from '@mantine/core'
+import { Container, Center, Select, Box, Paper, Transition } from '@mantine/core'
 import { useState } from 'react'
 import { useAudioGraph } from './hooks/useAudioGraph'
 import { SynthControls } from './components/SynthControls'
 import { BassKickControls } from './components/BassKickControls'
 import { DebugMenu } from './components/DebugMenu'
+import { InitializationScreen } from './components/InitializationScreen'
 import { getInstrumentPreset } from './config/instrumentPresets'
+import { loadTone } from './utils/toneLoader'
 import type { SynthSettings, MembraneSynthSettings } from './types/instruments'
 import type { LegacyInstrumentType } from './types/audioGraph'
 
 function App() {
+  const [isAudioInitialized, setIsAudioInitialized] = useState(false)
   const [currentInstrumentType, setCurrentInstrumentType] = useState<LegacyInstrumentType>('membraneSynth')
   const [currentConfig, setCurrentConfig] = useState(() => getInstrumentPreset('membraneSynth'))
   
@@ -26,6 +29,25 @@ function App() {
     { value: 'membraneSynth', label: 'Bass Kick' },
     { value: 'synth', label: 'Synth' }
   ]
+
+  const handleAudioInitialization = async () => {
+    try {
+      // Load Tone.js module
+      const Tone = await loadTone()
+      
+      // Start audio context
+      await Tone.start()
+      console.log('✅ Audio initialized successfully')
+      
+      // Add a small delay for smooth transition
+      setTimeout(() => {
+        setIsAudioInitialized(true)
+      }, 300)
+    } catch (error) {
+      console.error('❌ Failed to initialize audio:', error)
+      throw error
+    }
+  }
 
   const changeInstrumentType = (type: LegacyInstrumentType) => {
     const newConfig = getInstrumentPreset(type)
@@ -133,42 +155,57 @@ function App() {
     }
   }
 
+  // Show initialization screen if audio isn't initialized
+  if (!isAudioInitialized) {
+    return <InitializationScreen onInitialize={handleAudioInitialization} />
+  }
+
   return (
-    <Box style={{ 
-      minHeight: '100vh', 
-      position: 'relative', 
-      // Responsive padding - less on mobile for more content space
-      paddingLeft: 'clamp(16px, 6vw, 40px)',
-      paddingRight: 'clamp(16px, 6vw, 40px)'
-    }}>
-      {/* Debug Menu - Top Right */}
-      <Box style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 100 }}>
-        <DebugMenu />
-      </Box>
+    <Transition
+      mounted={isAudioInitialized}
+      transition="fade"
+      duration={500}
+    >
+      {(styles) => (
+        <div style={styles}>
+          <Box style={{ 
+            minHeight: '100vh', 
+            position: 'relative', 
+            // Responsive padding - less on mobile for more content space
+            paddingLeft: 'clamp(16px, 6vw, 40px)',
+            paddingRight: 'clamp(16px, 6vw, 40px)'
+          }}>
+            {/* Debug Menu - Top Right */}
+            <Box style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 100 }}>
+              <DebugMenu />
+            </Box>
 
-      {/* Main Content - Centered */}
-      <Center style={{ minHeight: '100vh', padding: '20px 0' }}>
-        <Container size="sm" style={{ 
-          width: '100%', 
-          maxWidth: '640px', // Allow space for 600px graphs + padding
-          padding: '0'
-        }}>
-          
-          <Select
-            label="Choose Instrument"
-            value={currentInstrumentType}
-            onChange={(value) => changeInstrumentType(value as LegacyInstrumentType)}
-            data={instrumentOptions}
-            mb="xl"
-            style={{ width: '100%' }}
-          />
+            {/* Main Content - Centered */}
+            <Center style={{ minHeight: '100vh', padding: '20px 0' }}>
+              <Container size="sm" style={{ 
+                width: '100%', 
+                maxWidth: '640px', // Allow space for 600px graphs + padding
+                padding: '0'
+              }}>
+                
+                <Select
+                  label="Choose Instrument"
+                  value={currentInstrumentType}
+                  onChange={(value) => changeInstrumentType(value as LegacyInstrumentType)}
+                  data={instrumentOptions}
+                  mb="xl"
+                  style={{ width: '100%' }}
+                />
 
-          <Paper shadow="sm" p="md" withBorder style={{ width: '100%', boxSizing: 'border-box' }}>
-            {renderInstrumentControls()}
-          </Paper>
-        </Container>
-      </Center>
-    </Box>
+                <Paper shadow="sm" p="md" withBorder style={{ width: '100%', boxSizing: 'border-box' }}>
+                  {renderInstrumentControls()}
+                </Paper>
+              </Container>
+            </Center>
+          </Box>
+        </div>
+      )}
+    </Transition>
   )
 }
 

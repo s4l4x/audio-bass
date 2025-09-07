@@ -184,8 +184,11 @@ export function useAudioNodes() {
     try {
       console.log('🏭 Lazy initializing Tone.js instance for:', nodeInstance.id)
       
-      // Load Tone.js dynamically if not already loaded
-      await loadTone()
+      // Tone.js should already be loaded
+      const Tone = getToneModule()
+      if (!Tone) {
+        throw new Error('Tone.js not loaded - initialization should have been completed')
+      }
       
       nodeInstance.instance = createToneInstance(nodeInstance.type, nodeInstance.settings)
       

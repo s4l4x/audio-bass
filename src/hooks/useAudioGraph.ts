@@ -303,24 +303,16 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
   const triggerGraph = useCallback(async (note?: string | number) => {
     console.log('🎵 triggerGraph called, initialized:', graphStateRef.current.isInitialized)
     
-    // Load Tone.js first
-    console.log('📦 Loading Tone.js...')
-    const Tone = await loadTone()
+    // Tone.js should already be loaded and initialized
+    const Tone = getToneModule()
     
-    // Check if AudioContext is running (might have been started by PlayButton)
-    if (Tone.getContext().state !== 'running') {
-      console.log('🔊 AudioContext not running, attempting to start...')
-      try {
-        await Tone.start()
-        console.log('✅ AudioContext started:', Tone.getContext().state)
-      } catch (error) {
-        console.error('❌ Failed to start AudioContext:', error)
-        console.log('⚠️ Note: AudioContext should be started by user gesture in PlayButton')
-        return
-      }
-    } else {
-      console.log('✅ AudioContext already running:', Tone.getContext().state)
+    if (!Tone) {
+      console.error('❌ Tone.js not loaded! This should not happen.')
+      return
     }
+    
+    // AudioContext should already be running from initialization
+    console.log('✅ AudioContext state:', Tone.getContext().state)
     
     // Generate waveform data in background if needed
     if (!waveformData) {

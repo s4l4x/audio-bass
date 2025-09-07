@@ -7,6 +7,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@200..800&display=swap&family=Major+Mono+Display&display=swap" rel="stylesheet">
+    <script>
+      // Mantine ColorSchemeScript equivalent
+      try {
+        const colorScheme = window.localStorage.getItem('mantine-color-scheme') || 'auto';
+        const computedColorScheme = colorScheme === 'auto' 
+          ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : colorScheme;
+        document.documentElement.setAttribute('data-mantine-color-scheme', computedColorScheme);
+      } catch (e) {
+        // Ignore localStorage errors
+      }
+    </script>
     <title>Audio Playground</title>
   </head>
   <body>
