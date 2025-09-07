@@ -1,4 +1,4 @@
-import { Stack, Center, Text, Title, Button, Box, Transition, LoadingOverlay, useMantineColorScheme, Group } from '@mantine/core'
+import { Stack, Center, Text, Title, Box, Transition, LoadingOverlay, useMantineColorScheme, Group } from '@mantine/core'
 import { IconPlayerPlayFilled } from '@tabler/icons-react'
 import { useState } from 'react'
 import { DebugMenu } from './DebugMenu'
@@ -78,7 +78,7 @@ export function InitializationScreen({ onInitialize }: InitializationScreenProps
                     ta="center"
                     style={{ fontSize: 'clamp(24px, 5vw, 34px)' }}
                   >
-                    DrumNB/Ass
+                    DrumFUNbAss
                   </Title>
                   <Text 
                     size="md" 
@@ -100,7 +100,7 @@ export function InitializationScreen({ onInitialize }: InitializationScreenProps
                     fontWeight: 600,
                     padding: '16px 32px',
                     height: 'auto',
-                    borderRadius: '24px',
+                    borderRadius: '999px',
                     border: 'none',
                     cursor: isInitializing ? 'not-allowed' : 'pointer',
                     display: 'flex',

@@ -22,7 +22,7 @@ export const theme = createTheme({
           '&:hover': {
             backgroundColor: '#aaa',
           },
-          '&[data-dragging="true"]': {
+          '&[dataDragging="true"]': {
             backgroundColor: '#999',
           },
         },

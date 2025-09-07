@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
-import { loadTone, getToneModule } from '../utils/toneLoader'
+import { getToneModule } from '../utils/toneLoader'
 import type { AudioNodeType, AudioNodeDefinition, NodeInstance } from '../types/audioGraph'
 
 // Factory function to create Tone.js instances based on node type

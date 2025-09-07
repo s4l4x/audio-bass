@@ -1,12 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { loadTone, getToneModule } from '../utils/toneLoader'
+import { getToneModule } from '../utils/toneLoader'
 import { useAudioNodes } from './useAudioNodes'
 import { useGraphConnections } from './useGraphConnections'
 import { useModulationMatrix } from './useModulationMatrix'
 import type { AudioGraphConfig, AudioGraphState } from '../types/audioGraph'
 
-export function useAudioGraph(initialConfig: AudioGraphConfig) {
-  const [config, setConfig] = useState<AudioGraphConfig>(initialConfig)
+export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
+  const [config, setConfig] = useState<AudioGraphConfig | null>(initialConfig)
   const [isPlaying, setIsPlaying] = useState(false)
   const [waveformData, setWaveformData] = useState<Float32Array | null>(null)
   const graphStateRef = useRef<AudioGraphState>({
@@ -18,7 +18,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
   // Flag to prevent effect loops
   const initializingRef = useRef(false)
 
-  // Use the specialized hooks for managing different aspects
+  // Use the specialized hooks for managing different aspects (always call hooks)
   const { 
     nodes, 
     createNode, 
@@ -40,6 +40,8 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
 
   // Generate waveform data for visualization using offline rendering
   const generateWaveformData = useCallback(async (): Promise<Float32Array | null> => {
+    if (!config) return null
+    
     try {
       // Get the trigger node settings
       const triggerNodeConfig = Object.entries(config.graph.nodes)
@@ -82,7 +84,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
       }
 
       // Generate waveform using Tone.Offline
-      const buffer = await Tone.Offline((context: unknown) => {
+      const buffer = await Tone.Offline((context: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         if (nodeDefinition.type === 'MembraneSynth') {
           // Provide safe defaults for MembraneSynth
           const membraneSettings = {
@@ -106,7 +108,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
           
           const synth = new Tone.MembraneSynth(membraneSettings)
           
-          synth.connect(context.destination)
+          synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
           synth.triggerAttack('C2', 0)
           
           const releaseTime = membraneSettings.envelope.attack + membraneSettings.envelope.decay + 
@@ -133,7 +135,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
           
           const synth = new Tone.Synth(synthSettings)
           
-          synth.connect(context.destination)
+          synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
           synth.triggerAttack(settings.frequency || 440, 0)
           
           // For sustained instruments, use 1 second of sustain for waveform visualization
@@ -163,6 +165,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
   // Initialize graph when config changes
   const initializeGraph = useCallback(async (configToUse?: AudioGraphConfig) => {
     const activeConfig = configToUse || config
+    if (!activeConfig) return
     
     // Prevent multiple initializations
     if (graphStateRef.current.isInitialized) {
@@ -209,13 +212,13 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
 
   // Handle config changes with proper cleanup
   useEffect(() => {
-    if (initialConfig !== config && !initializingRef.current) {
+    if (initialConfig && initialConfig !== config && !initializingRef.current) {
       initializingRef.current = true
       
       console.log('🔄 Config changed, updating graph:', initialConfig.name)
       
       // Release any currently playing audio before cleanup
-      if (isPlaying) {
+      if (isPlaying && config) {
         console.log('🔇 Stopping current playback before config change')
         // Directly release any active synthesizers
         const currentTriggerNodes = Object.entries(config.graph.nodes)
@@ -253,9 +256,9 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialConfig]) // Only respond to config prop changes - other deps cause infinite loop
 
-  // Ensure initialization runs on mount
+  // Ensure initialization runs on mount (only if config provided)
   useEffect(() => {
-    if (!graphStateRef.current.isInitialized && !initializingRef.current) {
+    if (initialConfig && !graphStateRef.current.isInitialized && !initializingRef.current) {
       console.log('🚀 Initial graph setup on mount')
       initializingRef.current = true
       
@@ -265,7 +268,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
         })
       }, 50)
     }
-  }, [initializeGraph])
+  }, [initialConfig, initializeGraph])
 
   // Generate waveform data when settings change (separate from initialization)
   useEffect(() => {
@@ -283,7 +286,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
 
   // Update graph configuration
   const updateConfig = useCallback((newConfig: Partial<AudioGraphConfig>) => {
-    setConfig(prev => ({ ...prev, ...newConfig }))
+    setConfig(prev => prev ? ({ ...prev, ...newConfig }) : null)
   }, [])
 
   // Update node settings within the graph
@@ -301,6 +304,8 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
 
   // Trigger the graph (start playback)
   const triggerGraph = useCallback(async (note?: string | number) => {
+    if (!config) return
+    
     console.log('🎵 triggerGraph called, initialized:', graphStateRef.current.isInitialized)
     
     // Tone.js should already be loaded and initialized
@@ -428,7 +433,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
     }
   }, [config, getNodeById, waveformData, generateWaveformData, initializeNodeInstance, isPlaying])
 
-  // Release the graph (stop playbook for sustained notes)
+  // Release the graph (stop playback for sustained notes)
   const releaseGraph = useCallback(() => {
     console.log('🛑 releaseGraph called')
     
@@ -438,6 +443,8 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
       console.log('⏭️ Skipping release - not playing')
       return
     }
+    
+    if (!config) return
     
     // Try to release using current nodes first (most reliable)
     let releasedAnyNode = false
@@ -505,17 +512,17 @@ export function useAudioGraph(initialConfig: AudioGraphConfig) {
   }, [nodes, disposeNode])
 
   return {
-    config,
-    isPlaying,
-    nodes,
-    connections,
-    modulationRoutes,
-    updateConfig,
-    updateNodeInGraph,
-    initializeGraph,
-    triggerGraph,
-    releaseGraph,
-    getWaveformData,
-    cleanup
+    config: initialConfig ? config : null,
+    isPlaying: initialConfig ? isPlaying : false,
+    nodes: initialConfig ? nodes : new Map(),
+    connections: initialConfig ? connections : [],
+    modulationRoutes: initialConfig ? modulationRoutes : [],
+    updateConfig: initialConfig ? updateConfig : () => {},
+    updateNodeInGraph: initialConfig ? updateNodeInGraph : async () => {},
+    initializeGraph: initialConfig ? initializeGraph : async () => {},
+    triggerGraph: initialConfig ? triggerGraph : async () => {},
+    releaseGraph: initialConfig ? releaseGraph : () => {},
+    getWaveformData: initialConfig ? getWaveformData : () => null,
+    cleanup: initialConfig ? cleanup : () => {}
   }
 }

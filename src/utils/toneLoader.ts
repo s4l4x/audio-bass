@@ -3,10 +3,10 @@
  * Only loads Tone.js when first needed (user interaction)
  */
 
-let toneModule: unknown = null
-let loadingPromise: Promise<unknown> | null = null
+let toneModule: typeof import('tone') | null = null
+let loadingPromise: Promise<typeof import('tone')> | null = null
 
-export async function loadTone() {
+export async function loadTone(): Promise<typeof import('tone')> {
   // Return cached module if already loaded
   if (toneModule) {
     return toneModule
@@ -27,10 +27,10 @@ export async function loadTone() {
   return loadingPromise
 }
 
-export function getToneModule() {
+export function getToneModule(): typeof import('tone') | null {
   return toneModule
 }
 
-export function isToneLoaded() {
+export function isToneLoaded(): boolean {
   return toneModule !== null
 }

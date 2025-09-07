@@ -15,6 +15,7 @@ function App() {
   const [currentInstrumentType, setCurrentInstrumentType] = useState<LegacyInstrumentType>('membraneSynth')
   const [currentConfig, setCurrentConfig] = useState(() => getInstrumentPreset('membraneSynth'))
   
+  // Only initialize audio graph after audio is ready
   const { 
     config, 
     isPlaying,
@@ -23,7 +24,7 @@ function App() {
     triggerGraph, 
     releaseGraph, 
     getWaveformData
-  } = useAudioGraph(currentConfig)
+  } = useAudioGraph(isAudioInitialized ? currentConfig : null)
 
   const instrumentOptions = [
     { value: 'membraneSynth', label: 'Bass Kick' },
@@ -57,6 +58,8 @@ function App() {
 
   // Helper function to update settings for the current instrument node
   const updateSettings = async (newSettings: Partial<SynthSettings | MembraneSynthSettings>) => {
+    if (!config) return
+    
     // Get the trigger node (the main instrument node)
     const triggerNode = Object.entries(config.graph.nodes)
       .find(([, nodeDef]) => nodeDef.trigger)?.[0]
@@ -73,6 +76,8 @@ function App() {
   }
 
   const renderInstrumentControls = () => {
+    if (!config) return null
+    
     // Get the trigger node settings for display
     const triggerNodeConfig = Object.entries(config.graph.nodes)
       .find(([, nodeDef]) => nodeDef.trigger)
