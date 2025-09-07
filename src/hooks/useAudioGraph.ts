@@ -9,6 +9,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
   const [config, setConfig] = useState<AudioGraphConfig | null>(initialConfig)
   const [isPlaying, setIsPlaying] = useState(false)
   const [waveformData, setWaveformData] = useState<Float32Array | null>(null)
+  const [isGraphInitialized, setIsGraphInitialized] = useState(false)
   const graphStateRef = useRef<AudioGraphState>({
     nodes: new Map(),
     connections: [],
@@ -200,10 +201,8 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
       }
 
       graphStateRef.current.isInitialized = true
+      setIsGraphInitialized(true)
       console.log('✅ Audio graph initialized successfully')
-      
-      // Don't generate waveform data immediately - wait for first user interaction
-      // This avoids AudioContext warnings on page load
       
     } catch (error) {
       console.error('❌ Failed to initialize audio graph:', error)
@@ -244,6 +243,8 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
       // Update config and reset state
       setConfig(initialConfig)
       graphStateRef.current.isInitialized = false
+      setIsGraphInitialized(false)
+      setWaveformData(null)
       
       // Initialize after cleanup with the new config
       setTimeout(async () => {
@@ -270,9 +271,33 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
     }
   }, [initialConfig, initializeGraph])
 
+  // Generate initial waveform data when graph is ready
+  useEffect(() => {
+    if (isGraphInitialized && nodes.size > 0 && !waveformData) {
+      console.log('🎨 Generating initial waveform data after initialization...')
+      const generateInitialWaveform = async () => {
+        try {
+          const newWaveformData = await generateWaveformData()
+          if (newWaveformData) {
+            setWaveformData(newWaveformData)
+            console.log('✅ Initial waveform data generated')
+          } else {
+            console.log('⚠️ No initial waveform data generated')
+          }
+        } catch (error) {
+          console.error('❌ Error generating initial waveform data:', error)
+        }
+      }
+      
+      // Small delay to ensure nodes are fully ready
+      const timer = setTimeout(generateInitialWaveform, 150)
+      return () => clearTimeout(timer)
+    }
+  }, [isGraphInitialized, nodes, waveformData, generateWaveformData])
+
   // Generate waveform data when settings change (separate from initialization)
   useEffect(() => {
-    if (graphStateRef.current.isInitialized) {
+    if (graphStateRef.current.isInitialized && waveformData) {
       const generateWaveform = async () => {
         const newWaveformData = await generateWaveformData()
         setWaveformData(newWaveformData)
