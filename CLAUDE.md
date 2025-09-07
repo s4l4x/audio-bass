@@ -730,4 +730,4 @@ describe('Audio Graph State Machine', () => {
     expect(service.state.context.isPlaying).toBe(false)
   })
 })
-- The init screen title should be DrumNB/Ass
+- The init screen title should be DrumUNbAss

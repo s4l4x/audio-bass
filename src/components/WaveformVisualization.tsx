@@ -7,7 +7,7 @@ interface WaveformVisualizationProps {
   height?: number
   isGenerating?: boolean
   totalDuration?: number
-  adsrSettings?: { attack: number; decay: number; sustainDuration: number; release: number }
+  adsrSettings?: { attack: number; decay: number; sustainDuration?: number; release: number }
 }
 
 export function WaveformVisualization({
@@ -54,7 +54,7 @@ export function WaveformVisualization({
   // Calculate actual duration from ADSR settings if provided, otherwise use totalDuration
   // Use 1-second minimum to match ADSR graph and prevent snapping
   const calculatedDuration = adsrSettings 
-    ? adsrSettings.attack + adsrSettings.decay + adsrSettings.sustainDuration + adsrSettings.release
+    ? adsrSettings.attack + adsrSettings.decay + (adsrSettings.sustainDuration || 1.0) + adsrSettings.release
     : totalDuration
   const actualDuration = Math.max(calculatedDuration, 1.0)
 

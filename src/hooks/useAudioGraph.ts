@@ -307,7 +307,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
       const timer = setTimeout(generateWaveform, 100)
       return () => clearTimeout(timer)
     }
-  }, [config, generateWaveformData])
+  }, [config, generateWaveformData, waveformData])
 
   // Update graph configuration
   const updateConfig = useCallback((newConfig: Partial<AudioGraphConfig>) => {

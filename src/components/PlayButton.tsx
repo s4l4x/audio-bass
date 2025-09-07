@@ -1,4 +1,4 @@
-import { Button } from '@mantine/core'
+import { Button, type MantineSize } from '@mantine/core'
 import { IconPlayerPlayFilled } from '@tabler/icons-react'
 import { useState, useEffect } from 'react'
 
@@ -9,7 +9,7 @@ export interface PlayButtonProps {
   onPlay?: () => void // For sustained type
   onStop?: () => void // For sustained type
   color?: string
-  size?: string | number
+  size?: MantineSize
   width?: string | number
   height?: string | number
 }

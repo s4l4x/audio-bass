@@ -19,8 +19,8 @@ export function ADSRControls<T extends BaseADSRSettings = ADSRSettings>({
   const { settings: defaultSettings, ranges } = useADSR({ instrumentType, ...adsrOptions })
   const currentSettings = initialSettings ? { ...defaultSettings, ...initialSettings } : defaultSettings
 
-  const handleGraphicalChange = (newSettings: T) => {
-    onSettingsChange?.(newSettings)
+  const handleGraphicalChange = (newSettings: BaseADSRSettings) => {
+    onSettingsChange?.(newSettings as T)
   }
 
   const resetToDefaults = () => {

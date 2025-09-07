@@ -75,9 +75,9 @@ export function useADSR<T extends BaseADSRSettings = ADSRSettings>(options: UseA
   // Get appropriate default settings based on instrument type
   const getDefaultSettings = (): T => {
     if (instrumentType === 'sustained') {
-      return { ...DEFAULT_SUSTAINED_SETTINGS, ...initialSettings } as T
+      return { ...DEFAULT_SUSTAINED_SETTINGS, ...initialSettings } as unknown as T
     } else {
-      return { ...DEFAULT_PERCUSSIVE_SETTINGS, ...initialSettings } as T
+      return { ...DEFAULT_PERCUSSIVE_SETTINGS, ...initialSettings } as unknown as T
     }
   }
   
