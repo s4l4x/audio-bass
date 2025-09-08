@@ -175,7 +175,7 @@ export function InitializationScreen({ onInitialize }: InitializationScreenProps
 
                     <Group gap="sm" align="center" style={{ position: 'relative', zIndex: 1 }}>
                       <Text component="span">
-                        {isInitializing ? 'Initializing Audio...' : "Let's Play"}
+                        Let's Play
                       </Text>
                       <IconPlayerPlayFilled size={24} stroke={1.5} />
                     </Group>
