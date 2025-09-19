@@ -1,8 +1,7 @@
 import { Container, Center, Select, Box, Paper, Transition } from '@mantine/core'
 import { useState } from 'react'
 import { useAudioGraph } from './hooks/useAudioGraph'
-import { SynthControls } from './components/SynthControls'
-import { BassKickControls } from './components/BassKickControls'
+import { InstrumentControls } from './components/InstrumentControls'
 import { DebugMenu } from './components/DebugMenu'
 import { InitializationScreen } from './components/InitializationScreen'
 import { getInstrumentPreset } from './config/instrumentPresets'
@@ -131,35 +130,18 @@ function App() {
 
     const safeSettings = getDefaultSettingsForType(currentInstrumentType, nodeSettings)
 
-    switch (currentInstrumentType) {
-      case 'synth':
-        return (
-          <SynthControls
-            settings={safeSettings as SynthSettings}
-            isPlaying={isPlaying}
-            onSettingsChange={updateSettings}
-            onPlay={() => triggerGraph()}
-            onStop={() => releaseGraph()}
-            getWaveformData={getWaveformData}
-            currentConfig={config}
-          />
-        )
-      
-      case 'membraneSynth':
-        return (
-          <BassKickControls
-            settings={safeSettings as MembraneSynthSettings}
-            isPlaying={isPlaying}
-            onSettingsChange={updateSettings}
-            onTrigger={() => triggerGraph()}
-            getWaveformData={getWaveformData}
-            currentConfig={config}
-          />
-        )
-      
-      default:
-        return null
-    }
+    return (
+      <InstrumentControls
+        config={config}
+        settings={safeSettings}
+        isPlaying={isPlaying}
+        onSettingsChange={updateSettings}
+        onTrigger={currentInstrumentType === 'membraneSynth' ? () => triggerGraph() : undefined}
+        onPlay={currentInstrumentType === 'synth' ? () => triggerGraph() : undefined}
+        onStop={currentInstrumentType === 'synth' ? () => releaseGraph() : undefined}
+        getWaveformData={getWaveformData}
+      />
+    )
   }
 
   // Show initialization screen if audio isn't initialized
