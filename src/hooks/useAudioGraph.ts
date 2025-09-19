@@ -106,6 +106,39 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
                         (settings.envelope.decay || 0.3) + 
                         (settings.envelope.sustain || 0.0) + 
                         (settings.envelope.release || 0.3) + 0.1
+      } else if (nodeDefinition.type === 'AMSynth' && settings.envelope) {
+        // AMSynth - sustained instrument with single envelope
+        const sustainDuration = 1.0 // Show 1 second of sustain for visualization
+        bufferDuration = (settings.envelope.attack || 0.01) + 
+                        (settings.envelope.decay || 0.3) + 
+                        sustainDuration + 
+                        (settings.envelope.release || 1.0) + 0.1
+      } else if (nodeDefinition.type === 'FMSynth' && settings.envelope) {
+        // FMSynth - sustained instrument with single envelope
+        const sustainDuration = 1.0 // Show 1 second of sustain for visualization
+        bufferDuration = (settings.envelope.attack || 0.01) + 
+                        (settings.envelope.decay || 0.3) + 
+                        sustainDuration + 
+                        (settings.envelope.release || 1.0) + 0.1
+      } else if (nodeDefinition.type === 'MonoSynth' && settings.envelope) {
+        // MonoSynth - sustained instrument with single envelope
+        const sustainDuration = 1.0 // Show 1 second of sustain for visualization
+        bufferDuration = (settings.envelope.attack || 0.01) + 
+                        (settings.envelope.decay || 0.3) + 
+                        sustainDuration + 
+                        (settings.envelope.release || 1.0) + 0.1
+      } else if (nodeDefinition.type === 'DuoSynth') {
+        // DuoSynth - sustained instrument with two voice envelopes
+        const voice0Envelope = settings.voice0?.envelope || { attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0 }
+        const voice1Envelope = settings.voice1?.envelope || { attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0 }
+        
+        // Calculate duration for each voice
+        const sustainDuration = 1.0 // Show 1 second of sustain for visualization
+        const voice0Duration = (voice0Envelope.attack || 0.01) + (voice0Envelope.decay || 0.3) + sustainDuration + (voice0Envelope.release || 1.0)
+        const voice1Duration = (voice1Envelope.attack || 0.01) + (voice1Envelope.decay || 0.3) + sustainDuration + (voice1Envelope.release || 1.0)
+        
+        // Use the longer of the two voice durations
+        bufferDuration = Math.max(voice0Duration, voice1Duration) + 0.1
       }
       
       // Get Tone module for waveform generation
@@ -171,7 +204,9 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
             synth = new Tone.AMSynth(settings)
             synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
             synth.triggerAttack(settings.frequency || 440, 0)
-            releaseTime = 2.0
+            // Calculate proper release time from envelope settings
+            const envelope = settings.envelope || {}
+            releaseTime = (envelope.attack || 0.01) + (envelope.decay || 0.3) + 1.0 // 1 second sustain for visualization
             synth.triggerRelease(releaseTime)
             break
           }
@@ -180,7 +215,9 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
             synth = new Tone.FMSynth(settings)
             synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
             synth.triggerAttack(settings.frequency || 440, 0)
-            releaseTime = 2.0
+            // Calculate proper release time from envelope settings
+            const envelope = settings.envelope || {}
+            releaseTime = (envelope.attack || 0.01) + (envelope.decay || 0.3) + 1.0 // 1 second sustain for visualization
             synth.triggerRelease(releaseTime)
             break
           }
@@ -189,7 +226,13 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
             synth = new Tone.DuoSynth(settings)
             synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
             synth.triggerAttack(settings.frequency || 440, 0)
-            releaseTime = 2.0
+            // Calculate proper release time from both voice envelope settings
+            const voice0Envelope = settings.voice0?.envelope || { attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0 }
+            const voice1Envelope = settings.voice1?.envelope || { attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0 }
+            const voice0ReleaseTime = (voice0Envelope.attack || 0.01) + (voice0Envelope.decay || 0.3) + 1.0 // 1 second sustain
+            const voice1ReleaseTime = (voice1Envelope.attack || 0.01) + (voice1Envelope.decay || 0.3) + 1.0 // 1 second sustain
+            // Use the longer of the two voice durations
+            releaseTime = Math.max(voice0ReleaseTime, voice1ReleaseTime)
             synth.triggerRelease(releaseTime)
             break
           }
@@ -217,7 +260,9 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
             synth = new Tone.MonoSynth(monoSynthSettings)
             synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
             synth.triggerAttack(settings.frequency || 440, 0)
-            releaseTime = 2.0
+            // Calculate proper release time from envelope settings
+            const envelope = settings.envelope || {}
+            releaseTime = (envelope.attack || 0.01) + (envelope.decay || 0.3) + 1.0 // 1 second sustain for visualization
             synth.triggerRelease(releaseTime)
             break
           }
