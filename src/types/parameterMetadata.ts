@@ -106,6 +106,22 @@ const instrumentSpecificMetadata: Record<string, Record<string, ParameterMetadat
       range: { min: 0, max: 7000, step: 50 },
       formatDisplay: (value: number) => value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toString()
     }
+  },
+  
+  AMSynth: {
+    harmonicity: {
+      controlType: 'slider',
+      unit: '',
+      range: { min: 0.1, max: 10, step: 0.1 }
+    }
+  },
+  
+  FMSynth: {
+    harmonicity: {
+      controlType: 'slider',
+      unit: '',
+      range: { min: 0.1, max: 10, step: 0.1 }
+    }
   }
 }
 
