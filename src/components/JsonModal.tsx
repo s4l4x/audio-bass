@@ -1,4 +1,6 @@
-import { Modal, ScrollArea, Code, Title, Box } from '@mantine/core'
+import { Modal, ScrollArea, Code, Title, Box, Group, ActionIcon } from '@mantine/core'
+import { useClipboard } from '@mantine/hooks'
+import { IconCopy, IconCheck, IconX } from '@tabler/icons-react'
 import type { AudioGraphConfig } from '../types/audioGraph'
 
 export interface JsonModalProps {
@@ -9,16 +11,48 @@ export interface JsonModalProps {
 
 export function JsonModal({ opened, onClose, config }: JsonModalProps) {
   const jsonString = config ? JSON.stringify(config, null, 2) : ''
+  const clipboard = useClipboard({ timeout: 2000 })
+
+  const handleCopy = () => {
+    clipboard.copy(jsonString)
+  }
 
   return (
     <Modal
       opened={opened}
       onClose={onClose}
-      title={<Title order={4}>Audio Graph Configuration</Title>}
+      title="Audio Graph Configuration"
       size="lg"
       centered
       scrollAreaComponent={ScrollArea.Autosize}
+      withCloseButton={false}
+      styles={{
+        header: {
+          position: 'relative'
+        }
+      }}
     >
+      <Box style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 1000 }}>
+        <Group gap="xs">
+          <ActionIcon
+            variant="subtle"
+            color={clipboard.copied ? 'teal' : 'gray'}
+            onClick={handleCopy}
+            disabled={!config}
+            size="sm"
+          >
+            {clipboard.copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+          </ActionIcon>
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            onClick={onClose}
+            size="sm"
+          >
+            <IconX size={16} />
+          </ActionIcon>
+        </Group>
+      </Box>
       <Box>
         {config ? (
           <ScrollArea.Autosize mah={500}>
