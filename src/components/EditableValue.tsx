@@ -21,12 +21,16 @@ export function EditableValue({
   unit,
   onValueChange,
   formatDisplay,
+  // min and max are kept in interface for backwards compatibility but not used
   min = -Infinity,
   max = Infinity,
   size = 'xs',
   mb = '4px',
   description
 }: EditableValueProps) {
+  // Explicitly mark min/max as intentionally unused to avoid TS warnings
+  void min
+  void max
   const [isEditing, setIsEditing] = useState(false)
   const [tempValue, setTempValue] = useState(value.toString())
   const [infoModalOpened, setInfoModalOpened] = useState(false)
@@ -49,9 +53,12 @@ export function EditableValue({
 
   const handleSubmit = () => {
     const newValue = parseFloat(tempValue)
-    if (!isNaN(newValue) && newValue >= min && newValue <= max) {
+    if (!isNaN(newValue)) {
+      // Allow any valid number, even if outside min/max range
+      // Let the synthesizer handle clamping if needed
       onValueChange(newValue)
     } else {
+      // Only revert if it's not a valid number at all
       setTempValue(value.toString())
     }
     setIsEditing(false)
@@ -63,42 +70,13 @@ export function EditableValue({
     } else if (event.key === 'Escape') {
       setTempValue(value.toString())
       setIsEditing(false)
-    } else {
-      // Allow: backspace, delete, tab, escape, enter, decimal point
-      if ([8, 9, 27, 13, 46, 110, 190].indexOf(event.keyCode) !== -1 ||
-          // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-          (event.keyCode === 65 && event.ctrlKey === true) ||
-          (event.keyCode === 67 && event.ctrlKey === true) ||
-          (event.keyCode === 86 && event.ctrlKey === true) ||
-          (event.keyCode === 88 && event.ctrlKey === true) ||
-          // Allow: home, end, left, right
-          (event.keyCode >= 35 && event.keyCode <= 39)) {
-        // Let it happen
-        return
-      }
-      // Ensure that it's a number and stop the keypress
-      if ((event.shiftKey || (event.keyCode < 48 || event.keyCode > 57)) && (event.keyCode < 96 || event.keyCode > 105)) {
-        event.preventDefault()
-      }
     }
+    // Remove restrictive keyboard validation - let users type freely
   }
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     let inputValue = event.currentTarget.value.replace(` ${unit}`, '').replace(unit, '')
-    // Only allow numbers, decimal point, and negative sign
-    inputValue = inputValue.replace(/[^0-9.-]/g, '')
-    // Prevent multiple decimal points
-    const parts = inputValue.split('.')
-    if (parts.length > 2) {
-      inputValue = parts[0] + '.' + parts.slice(1).join('')
-    }
-    // Prevent multiple negative signs and ensure it's only at the beginning
-    if (inputValue.indexOf('-') > 0) {
-      inputValue = inputValue.replace(/-/g, '')
-    }
-    if (inputValue.split('-').length > 2) {
-      inputValue = '-' + inputValue.replace(/-/g, '')
-    }
+    // Allow users to type freely - only do minimal cleanup
     setTempValue(inputValue)
   }
 
@@ -163,7 +141,7 @@ export function EditableValue({
                 padding: '0 2px',
                 border: 'none',
                 background: 'transparent',
-                width: `${Math.max(tempValue.length + unit.length + 2, 6)}ch`,
+                width: `${Math.max(tempValue.length + unit.length + 2, 8)}ch`,
                 outline: 'none',
                 fontFamily: 'inherit'
               }}
