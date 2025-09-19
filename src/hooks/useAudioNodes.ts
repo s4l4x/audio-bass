@@ -50,8 +50,29 @@ const createToneInstance = (type: AudioNodeType, settings: Record<string, any> =
       }
       case 'PluckSynth':
         return new Tone.PluckSynth(settings)
-      case 'PolySynth':
-        return new Tone.PolySynth(settings)
+      case 'PolySynth': {
+        // PolySynth requires voice constructor and voice options
+        const voiceSettings = settings.voice || { 
+          oscillator: { type: 'sawtooth' }, 
+          envelope: { attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0 } 
+        }
+        
+        // PolySynth constructor: new PolySynth(VoiceClass, voiceOptions)
+        const voiceOptions = {
+          ...voiceSettings,
+          volume: settings.volume || -6
+        }
+        
+        console.log('🎹 Creating PolySynth with voice options:', voiceOptions)
+        const polySynth = new Tone.PolySynth(Tone.Synth, voiceOptions)
+        
+        // Apply maxPolyphony separately if supported
+        if ('maxPolyphony' in polySynth) {
+          polySynth.maxPolyphony = settings.maxPolyphony || 8
+        }
+        
+        return polySynth
+      }
       case 'MetalSynth':
         return new Tone.MetalSynth(settings)
       case 'NoiseSynth':
@@ -237,6 +258,15 @@ const transformSettingsForNodeType = (nodeType: AudioNodeType, settings: Record<
     }
   }
 
+  // Handle PolySynth specific transformations
+  if (nodeType === 'PolySynth') {
+    console.log('🔧 Transforming PolySynth settings:', settings)
+    // PolySynth voice settings need to be applied via .set() method on all voices
+    if ('voice' in settings) {
+      console.log('🔧 PolySynth voice update detected:', settings.voice)
+    }
+  }
+
   return transformed
 }
 
@@ -341,7 +371,24 @@ export function useAudioNodes() {
         instance = node.instance
       }
       
-      for (const [key, value] of Object.entries(transformedSettings)) {
+      // Special handling for PolySynth - use .set() method for voice changes
+      let settingsToProcess = transformedSettings
+      if (node.type === 'PolySynth' && 'voice' in transformedSettings) {
+        console.log('🎹 Applying PolySynth voice settings via .set() method:', transformedSettings.voice)
+        try {
+          if ('set' in instance) {
+            instance.set(transformedSettings.voice)
+            console.log('✅ PolySynth voice settings applied successfully')
+          }
+        } catch (error) {
+          console.error('❌ Failed to apply PolySynth voice settings:', error)
+        }
+        // Create new settings object without voice to avoid double-processing
+        const { voice, ...remainingSettings } = transformedSettings
+        settingsToProcess = remainingSettings
+      }
+      
+      for (const [key, value] of Object.entries(settingsToProcess)) {
         console.log(`🔍 Processing property: ${key} =`, value)
         if (instance[key] !== undefined) {
           if (typeof instance[key] === 'object' && 'value' in instance[key] && typeof value === 'number') {

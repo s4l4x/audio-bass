@@ -120,6 +120,17 @@ export function InstrumentControls({
     onSettingsChange(updatedSettings)
   }
 
+  // Handle PolySynth voice settings changes
+  const handlePolySynthVoiceChange = (voiceSettings: Record<string, unknown>) => {
+    console.log('🎛️ Updating PolySynth voice settings:', voiceSettings)
+    onSettingsChange({
+      voice: {
+        ...((settings.voice as Record<string, unknown>) || {}),
+        ...voiceSettings
+      }
+    })
+  }
+
   // Handle nested envelope settings for voices
   const handleVoiceEnvelopeChange = (voiceIndex: 0 | 1, envSettings: Record<string, unknown>) => {
     const currentVoice = (settings[`voice${voiceIndex}`] as Record<string, unknown>) || {}
@@ -141,6 +152,36 @@ export function InstrumentControls({
 
     console.log(`🎚️ Updated settings for voice${voiceIndex}:`, updatedSettings)
     onSettingsChange(updatedSettings)
+  }
+
+  // Render PolySynth-specific controls
+  const renderPolySynthControls = () => {
+    const voice = (settings.voice as Record<string, unknown>) || {}
+    const voiceOsc = (voice.oscillator as Record<string, unknown>) || {}
+
+    return (
+      <Stack gap="md">
+        <Text fw={500} size="sm">Voice</Text>
+        <Select
+          value={voiceOsc.type as string || 'sawtooth'}
+          onChange={(value) => handlePolySynthVoiceChange({ oscillator: { type: value } })}
+          data={[
+            { value: 'sine', label: 'Sine' },
+            { value: 'sawtooth', label: 'Sawtooth' },
+            { value: 'square', label: 'Square' },
+            { value: 'triangle', label: 'Triangle' }
+          ]}
+          size="xs"
+        />
+        <ADSRControls
+          instrumentType={triggerType === 'sustained' ? 'sustained' : 'percussive'}
+          initialSettings={((settings.voice as Record<string, unknown>)?.envelope as ADSRSettings) || {
+            attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0
+          }}
+          onSettingsChange={(envelope) => handlePolySynthVoiceChange({ envelope })}
+        />
+      </Stack>
+    )
   }
 
   // Render DuoSynth-specific controls
@@ -331,8 +372,11 @@ export function InstrumentControls({
       {/* DuoSynth-specific controls */}
       {instrumentType === 'DuoSynth' && renderDuoSynthControls()}
 
-      {/* Main envelope controls - only for non-DuoSynth and non-PluckSynth instruments */}
-      {instrumentType !== 'DuoSynth' && instrumentType !== 'PluckSynth' && (
+      {/* PolySynth-specific controls */}
+      {instrumentType === 'PolySynth' && renderPolySynthControls()}
+
+      {/* Main envelope controls - only for non-DuoSynth, non-PluckSynth, and non-PolySynth instruments */}
+      {instrumentType !== 'DuoSynth' && instrumentType !== 'PluckSynth' && instrumentType !== 'PolySynth' && (
         <Stack gap="xs">
           <ADSRControls
             instrumentType={triggerType === 'sustained' ? 'sustained' : 'percussive'}

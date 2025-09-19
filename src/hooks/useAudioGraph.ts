@@ -139,6 +139,14 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
         
         // Use the longer of the two voice durations
         bufferDuration = Math.max(voice0Duration, voice1Duration) + 0.1
+      } else if (nodeDefinition.type === 'PolySynth') {
+        // PolySynth - polyphonic instrument with voice-based envelope
+        const voiceEnvelope = settings.voice?.envelope || { attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0 }
+        const sustainDuration = 1.0 // Show 1 second of sustain for visualization
+        bufferDuration = (voiceEnvelope.attack || 0.01) + 
+                        (voiceEnvelope.decay || 0.3) + 
+                        sustainDuration + 
+                        (voiceEnvelope.release || 1.0) + 0.1
       }
       
       // Get Tone module for waveform generation
@@ -277,11 +285,34 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
           }
           
           case 'PolySynth': {
-            synth = new Tone.PolySynth(Tone.Synth, settings)
+            // Create PolySynth with voice settings applied
+            const voiceEnvelope = settings.voice?.envelope || { attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0 }
+            const voiceOscillator = settings.voice?.oscillator || { type: 'sawtooth' }
+            
+            console.log('🎨 PolySynth waveform generation - voice oscillator:', voiceOscillator)
+            console.log('🎨 PolySynth waveform generation - voice envelope:', voiceEnvelope)
+            
+            // PolySynth constructor: new PolySynth(VoiceClass, voiceOptions)
+            const voiceOptions = {
+              oscillator: voiceOscillator,
+              envelope: voiceEnvelope,
+              volume: settings.volume || -6
+            }
+            
+            console.log('🎨 PolySynth waveform generation - voice options:', voiceOptions)
+            synth = new Tone.PolySynth(Tone.Synth, voiceOptions)
+            
+            // Apply maxPolyphony separately if supported
+            if ('maxPolyphony' in synth) {
+              synth.maxPolyphony = settings.maxPolyphony || 8
+            }
             synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
-            synth.triggerAttack(settings.frequency || 440, 0)
-            releaseTime = 2.0
-            synth.triggerRelease(settings.frequency || 440, releaseTime)
+            const frequency = settings.frequency || 440
+            synth.triggerAttack(frequency, 0)
+            // Calculate proper release time from voice envelope settings
+            releaseTime = (voiceEnvelope.attack || 0.01) + (voiceEnvelope.decay || 0.3) + 1.0 // 1 second sustain for visualization
+            // PolySynth.triggerRelease(note, time) - note first, then time
+            synth.triggerRelease(frequency, releaseTime)
             break
           }
           
@@ -701,7 +732,16 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
           // Release any currently playing note first to prevent overlapping
           if ('triggerRelease' in toneNode && isPlaying) {
             console.log('🎹 Releasing current note before new attack')
-            toneNode.triggerRelease()
+            
+            // Special handling for PolySynth
+            if (node.type === 'PolySynth') {
+              if ('releaseAll' in toneNode) {
+                console.log('🔇 PolySynth: Releasing all voices before new attack')
+                toneNode.releaseAll()
+              }
+            } else {
+              toneNode.triggerRelease()
+            }
           }
           
           // Handle different instrument types for sustained triggering
@@ -748,7 +788,23 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
       if (node && node.instance && 'triggerRelease' in node.instance) {
         console.log('🔇 Releasing node:', nodeId)
         const toneNode = node.instance // as Tone.Synth | Tone.MembraneSynth
-        toneNode.triggerRelease()
+        
+        // Special handling for PolySynth which requires note parameter
+        if (node.type === 'PolySynth') {
+          // PolySynth needs to release all active voices - use releaseAll()
+          if ('releaseAll' in toneNode) {
+            console.log('🔇 PolySynth: Releasing all voices')
+            toneNode.releaseAll()
+          } else {
+            // Fallback: try to release the frequency that was triggered
+            const frequency = node.settings.frequency || 440
+            console.log('🔇 PolySynth: Releasing specific note:', frequency)
+            toneNode.triggerRelease(frequency)
+          }
+        } else {
+          // Standard triggerRelease for monophonic synths
+          toneNode.triggerRelease()
+        }
         releasedAnyNode = true
       } else {
         console.warn('⚠️ Cannot release node:', nodeId, 'Node exists:', !!node, 'Has instance:', node?.instance !== null, 'Has triggerRelease:', node?.instance && 'triggerRelease' in node.instance)
