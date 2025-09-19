@@ -12,7 +12,7 @@ document.addEventListener('contextmenu', (e) => {
 })
 
 // Prevent mobile long press context menu
-let touchTimeout: number | null = null
+let touchTimeout: ReturnType<typeof setTimeout> | null = null
 document.addEventListener('touchstart', (e) => {
   if (touchTimeout) {
     clearTimeout(touchTimeout)
