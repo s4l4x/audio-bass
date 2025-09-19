@@ -141,6 +141,7 @@ function App() {
             onPlay={() => triggerGraph()}
             onStop={() => releaseGraph()}
             getWaveformData={getWaveformData}
+            currentConfig={currentConfig}
           />
         )
       
@@ -152,6 +153,7 @@ function App() {
             onSettingsChange={updateSettings}
             onTrigger={() => triggerGraph()}
             getWaveformData={getWaveformData}
+            currentConfig={currentConfig}
           />
         )
       

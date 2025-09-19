@@ -1,11 +1,15 @@
 import { Stack, Text, Slider, Select, Group, Title, useMantineTheme } from '@mantine/core'
+import { useState } from 'react'
 import { PlayButton } from './PlayButton'
+import { JsonViewButton } from './JsonViewButton'
+import { JsonModal } from './JsonModal'
 import { useMediaQuery } from '@mantine/hooks'
 import { EditableValue } from './EditableValue'
 import { ADSRControls } from './ADSRControls'
 import { WaveformVisualization } from './WaveformVisualization'
 import type { MembraneSynthSettings } from '../types/instruments'
 import type { ADSRSettings } from '../hooks/useADSR'
+import type { AudioGraphConfig } from '../types/audioGraph'
 
 interface BassKickControlsProps {
   settings: MembraneSynthSettings
@@ -13,19 +17,22 @@ interface BassKickControlsProps {
   onSettingsChange: (settings: Partial<MembraneSynthSettings>) => void
   onTrigger: () => void
   getWaveformData: () => Float32Array | null
+  currentConfig: AudioGraphConfig | null
 }
 
-export function BassKickControls({ 
-  settings, 
+export function BassKickControls({
+  settings,
   isPlaying,
-  onSettingsChange, 
+  onSettingsChange,
   onTrigger,
-  getWaveformData
+  getWaveformData,
+  currentConfig
 }: BassKickControlsProps) {
+  const [jsonModalOpened, setJsonModalOpened] = useState(false)
   const theme = useMantineTheme()
   const isMobile = useMediaQuery('(max-width: 768px)')
   const sliderSize = isMobile ? 'md' : 'sm'
-  
+
   // Get responsive thumb size from theme
   const thumbSize = isMobile ? theme.other.slider.thumb.sizeMobile : theme.other.slider.thumb.size
   const sliderStyles = {
@@ -34,7 +41,7 @@ export function BassKickControls({
       height: thumbSize,
     }
   }
-  
+
   const handleADSRChange = (envelope: ADSRSettings) => {
     onSettingsChange({ envelope })
   }
@@ -43,15 +50,24 @@ export function BassKickControls({
     <Stack gap="md">
       <Group justify="space-between" align="center">
         <Title order={4} size="xl" fw="400">Bass Kick</Title>
-        <PlayButton
-          triggerType="pulse"
-          isPlaying={isPlaying}
-          onTrigger={onTrigger}
-          color="red"
-          size="xs"
-          width={30}
-          height={30}
-        />
+        <Group gap="sm" align="center">
+          <JsonViewButton
+            onOpenModal={() => setJsonModalOpened(true)}
+            color="gray"
+            size="xs"
+            width={30}
+            height={30}
+          />
+          <PlayButton
+            triggerType="pulse"
+            isPlaying={isPlaying}
+            onTrigger={onTrigger}
+            color="red"
+            size="xs"
+            width={30}
+            height={30}
+          />
+        </Group>
       </Group>
 
       <WaveformVisualization
@@ -147,6 +163,12 @@ export function BassKickControls({
         }}
         onSettingsChange={handleADSRChange}
         totalDuration={settings.envelope.attack + settings.envelope.decay + settings.envelope.sustainDuration + settings.envelope.release}
+      />
+
+      <JsonModal
+        opened={jsonModalOpened}
+        onClose={() => setJsonModalOpened(false)}
+        config={currentConfig}
       />
     </Stack>
   )
