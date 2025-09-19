@@ -328,6 +328,42 @@ export const noiseSynthPreset: AudioGraphConfig = {
   }
 }
 
+// Preset for PolySynth (Polyphonic synthesizer)
+export const polySynthPreset: AudioGraphConfig = {
+  name: 'Poly Synth',
+  type: 'instrument',
+  graph: {
+    nodes: {
+      polySynth: {
+        type: 'PolySynth',
+        trigger: true,
+        settings: {
+          frequency: 440,
+          volume: -6,
+          voice: {
+            oscillator: { type: 'sawtooth' },
+            envelope: {
+              attack: 0.01,
+              decay: 0.3,
+              sustain: 0.3,
+              release: 1.0
+            }
+          },
+          maxPolyphony: 8
+        }
+      },
+      output: { type: 'Output', settings: {} }
+    },
+    connections: [{ from: 'polySynth', to: 'output' }],
+    trigger: 'sustained'
+  },
+  metadata: {
+    category: 'synthesis',
+    tags: ['poly', 'polyphonic', 'chords'],
+    description: 'Polyphonic synthesizer for playing chords'
+  }
+}
+
 // Preset for Sampler instrument
 export const samplerPreset: AudioGraphConfig = {
   name: 'Sampler',
@@ -366,6 +402,7 @@ export const instrumentPresets = {
   duoSynth: duoSynthPreset,
   monoSynth: monoSynthPreset,
   pluckSynth: pluckSynthPreset,
+  polySynth: polySynthPreset,
   metalSynth: metalSynthPreset,
   noiseSynth: noiseSynthPreset,
   sampler: samplerPreset
@@ -386,6 +423,7 @@ export function getAvailableInstruments(): Array<{ key: keyof typeof instrumentP
     { key: 'duoSynth', name: 'Duo Synth', description: 'Two oscillator synthesizer' },
     { key: 'monoSynth', name: 'Mono Synth', description: 'Monophonic synthesizer with filter' },
     { key: 'pluckSynth', name: 'Pluck Synth', description: 'Physical modeling plucked string' },
+    { key: 'polySynth', name: 'Poly Synth', description: 'Polyphonic synthesizer for chords' },
     { key: 'metalSynth', name: 'Metal Synth', description: 'Metallic percussion synthesizer' },
     { key: 'noiseSynth', name: 'Noise Synth', description: 'Noise-based synthesizer for percussion' },
     { key: 'sampler', name: 'Sampler', description: 'Sample-based instrument player' }
