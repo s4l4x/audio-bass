@@ -34,8 +34,20 @@ const createToneInstance = (type: AudioNodeType, settings: Record<string, any> =
         })
         return duoSynth
       }
-      case 'MonoSynth':
-        return new Tone.MonoSynth(settings)
+      case 'MonoSynth': {
+        const monoSynth = new Tone.MonoSynth(settings)
+        console.log('🔍 MonoSynth structure:', {
+          filter: monoSynth.filter,
+          filterQ: monoSynth.filter?.Q,
+          filterType: monoSynth.filter?.type,
+          filterRolloff: monoSynth.filter?.rolloff,
+          filterEnvelope: monoSynth.filterEnvelope,
+          filterEnv_baseFreq: monoSynth.filterEnvelope?.baseFrequency,
+          filterEnv_octaves: monoSynth.filterEnvelope?.octaves,
+          filterEnv_exponent: monoSynth.filterEnvelope?.exponent
+        })
+        return monoSynth
+      }
       case 'PluckSynth':
         return new Tone.PluckSynth(settings)
       case 'PolySynth':
@@ -144,6 +156,48 @@ const transformSettingsForNodeType = (nodeType: AudioNodeType, settings: Record<
       }
       // Remove the original flat property since we've nested it
       delete transformed.oscillatorType
+    }
+  }
+
+  // Handle MonoSynth specific transformations
+  if (nodeType === 'MonoSynth') {
+    // MonoSynth has filter and filterEnvelope parameters that need special mapping
+    console.log('🔧 Processing MonoSynth settings:', settings)
+    
+    // Map flattened filter parameters to nested structure
+    if ('Q' in settings || 'filterType' in settings || 'rolloff' in settings) {
+      // Preserve existing filter settings and add new ones
+      transformed.filter = { ...(transformed.filter || {}) }
+      if ('Q' in settings) {
+        console.log('🔧 Mapping Q parameter:', settings.Q)
+        transformed.filter.Q = settings.Q
+      }
+      if ('filterType' in settings) {
+        console.log('🔧 Mapping filterType parameter:', settings.filterType)
+        transformed.filter.type = settings.filterType
+      }
+      if ('rolloff' in settings) {
+        console.log('🔧 Mapping rolloff parameter:', settings.rolloff)
+        transformed.filter.rolloff = settings.rolloff
+      }
+    }
+    
+    // Map flattened filter envelope parameters to nested structure
+    if ('baseFrequency' in settings || 'octaves' in settings || 'exponent' in settings) {
+      // Preserve existing filterEnvelope settings and add new ones
+      transformed.filterEnvelope = { ...(transformed.filterEnvelope || {}) }
+      if ('baseFrequency' in settings) {
+        console.log('🔧 Mapping baseFrequency parameter:', settings.baseFrequency)
+        transformed.filterEnvelope.baseFrequency = settings.baseFrequency
+      }
+      if ('octaves' in settings) {
+        console.log('🔧 Mapping octaves parameter:', settings.octaves)
+        transformed.filterEnvelope.octaves = settings.octaves
+      }
+      if ('exponent' in settings) {
+        console.log('🔧 Mapping exponent parameter:', settings.exponent)
+        transformed.filterEnvelope.exponent = settings.exponent
+      }
     }
   }
 
@@ -306,13 +360,13 @@ export function useAudioNodes() {
                       nestedKey,
                       nestedValue,
                       targetType: typeof target[nestedKey],
-                      hasValue: target[nestedKey] && target[nestedKey].hasOwnProperty && target[nestedKey].hasOwnProperty('value'),
+                      hasValue: target[nestedKey] && typeof target[nestedKey] === 'object' && 'value' in target[nestedKey],
                       isEnvelope: nestedKey === 'envelope',
                       hasADSR: typeof nestedValue === 'object' && nestedValue !== null && (nestedValue.hasOwnProperty('attack') || nestedValue.hasOwnProperty('decay') || nestedValue.hasOwnProperty('sustain') || nestedValue.hasOwnProperty('release'))
                     })
 
-                    if (typeof target[nestedKey] === 'object' && target[nestedKey] !== null && target[nestedKey].hasOwnProperty && target[nestedKey].hasOwnProperty('value')) {
-                      // Tone.js Param (like envelope.attack, envelope.decay, etc.)
+                    if (typeof target[nestedKey] === 'object' && target[nestedKey] !== null && 'value' in target[nestedKey]) {
+                      // Tone.js Param (like envelope.attack, envelope.decay, filter.Q, etc.)
                       console.log(`🔧 Setting Tone.js Param ${nestedPath}.value =`, nestedValue)
                       target[nestedKey].value = nestedValue
                     } else if (typeof nestedValue === 'object' && nestedValue !== null && typeof target[nestedKey] === 'object' && target[nestedKey] !== null) {
@@ -322,7 +376,7 @@ export function useAudioNodes() {
                         // For envelope objects, handle each ADSR parameter individually
                         for (const [envParam, envValue] of Object.entries(nestedValue)) {
                           if (target[nestedKey][envParam] !== undefined) {
-                            if (typeof target[nestedKey][envParam] === 'object' && target[nestedKey][envParam] !== null && target[nestedKey][envParam].hasOwnProperty && target[nestedKey][envParam].hasOwnProperty('value')) {
+                            if (typeof target[nestedKey][envParam] === 'object' && target[nestedKey][envParam] !== null && 'value' in target[nestedKey][envParam]) {
                               console.log(`🔧 Setting envelope param ${nestedPath}.${envParam}.value =`, envValue)
                               target[nestedKey][envParam].value = envValue
                             } else {

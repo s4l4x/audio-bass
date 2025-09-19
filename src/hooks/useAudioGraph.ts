@@ -195,7 +195,26 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
           }
           
           case 'MonoSynth': {
-            synth = new Tone.MonoSynth(settings)
+            // Transform flattened parameters to nested structure for Tone.js
+            const monoSynthSettings = { ...settings }
+            
+            // Map filter parameters
+            if ('Q' in settings || 'filterType' in settings || 'rolloff' in settings) {
+              monoSynthSettings.filter = { ...(monoSynthSettings.filter || {}) }
+              if ('Q' in settings) monoSynthSettings.filter.Q = settings.Q
+              if ('filterType' in settings) monoSynthSettings.filter.type = settings.filterType
+              if ('rolloff' in settings) monoSynthSettings.filter.rolloff = settings.rolloff
+            }
+            
+            // Map filter envelope parameters
+            if ('baseFrequency' in settings || 'octaves' in settings || 'exponent' in settings) {
+              monoSynthSettings.filterEnvelope = { ...(monoSynthSettings.filterEnvelope || {}) }
+              if ('baseFrequency' in settings) monoSynthSettings.filterEnvelope.baseFrequency = settings.baseFrequency
+              if ('octaves' in settings) monoSynthSettings.filterEnvelope.octaves = settings.octaves
+              if ('exponent' in settings) monoSynthSettings.filterEnvelope.exponent = settings.exponent
+            }
+            
+            synth = new Tone.MonoSynth(monoSynthSettings)
             synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
             synth.triggerAttack(settings.frequency || 440, 0)
             releaseTime = 2.0

@@ -85,6 +85,21 @@ export const parameterMetadata: Record<string, ParameterMetadata> = {
     range: { min: 0.1, max: 30, step: 0.1 }
   },
   
+  // Filter type
+  filterType: {
+    controlType: 'select',
+    options: [
+      { value: 'lowpass', label: 'Low Pass' },
+      { value: 'highpass', label: 'High Pass' },
+      { value: 'bandpass', label: 'Band Pass' },
+      { value: 'lowshelf', label: 'Low Shelf' },
+      { value: 'highshelf', label: 'High Shelf' },
+      { value: 'notch', label: 'Notch' },
+      { value: 'allpass', label: 'All Pass' },
+      { value: 'peaking', label: 'Peaking' }
+    ]
+  },
+  
   // MetalSynth specific parameters
   harmonicity: {
     controlType: 'slider',
@@ -135,6 +150,56 @@ const instrumentSpecificMetadata: Record<string, Record<string, ParameterMetadat
       range: { min: 0, max: 100, step: 1 },
       description: 'FM synthesis depth. Controls spectral complexity. Low values (1-10) add harmonics, high values (20+) create bell-like, metallic sounds.'
     }
+  },
+  
+  MonoSynth: {
+    // Filter parameters
+    Q: {
+      controlType: 'slider',
+      unit: '',
+      range: { min: 0.1, max: 30, step: 0.1 },
+      description: 'Filter resonance/Q factor. Higher values create more pronounced resonance peaks and can make the filter self-oscillate at extreme settings.'
+    },
+    filterType: {
+      controlType: 'select',
+      options: [
+        { value: 'lowpass', label: 'Low Pass' },
+        { value: 'highpass', label: 'High Pass' },
+        { value: 'bandpass', label: 'Band Pass' },
+        { value: 'notch', label: 'Notch' }
+      ],
+      description: 'Filter type. Lowpass cuts high frequencies above the cutoff, highpass cuts low frequencies below the cutoff, bandpass only allows frequencies near the cutoff, notch cuts frequencies at the cutoff.'
+    },
+    rolloff: {
+      controlType: 'select',
+      options: [
+        { value: '-12', label: '-12 dB/oct' },
+        { value: '-24', label: '-24 dB/oct' },
+        { value: '-48', label: '-48 dB/oct' },
+        { value: '-96', label: '-96 dB/oct' }
+      ],
+      description: 'Filter slope steepness. Controls how sharply the filter cuts frequencies. -12 dB/oct is gentle and musical, -96 dB/oct is very sharp and aggressive.'
+    },
+    
+    // Filter envelope parameters
+    baseFrequency: {
+      controlType: 'slider',
+      unit: 'Hz',
+      range: { min: 20, max: 2000, step: 10 },
+      description: 'Filter cutoff frequency. This is where the filter starts cutting frequencies. For lowpass: frequencies above this are cut. For highpass: frequencies below this are cut.'
+    },
+    octaves: {
+      controlType: 'slider',
+      unit: 'oct',
+      range: { min: 0.1, max: 8, step: 0.1 },
+      description: 'Range of the filter envelope in octaves. Higher values allow the filter to sweep across a wider frequency range.'
+    },
+    exponent: {
+      controlType: 'slider',
+      unit: '',
+      range: { min: 0.1, max: 10, step: 0.1 },
+      description: 'Filter envelope curve shape. 1.0 = linear, >1.0 = exponential rise, <1.0 = logarithmic rise. Affects the character of the filter sweep.'
+    }
   }
 }
 
@@ -153,6 +218,6 @@ export function getParameterMetadata(parameterName: string, instrumentType?: str
 export function shouldShowParameter(parameterName: string): boolean {
   // Skip nested objects like envelope (handled separately)
   // Skip internal/advanced parameters
-  const skipParams = ['envelope', 'oscillator', 'context', 'channelCount', 'numberOfInputs', 'numberOfOutputs']
+  const skipParams = ['envelope', 'oscillator', 'filter', 'filterEnvelope', 'context', 'channelCount', 'numberOfInputs', 'numberOfOutputs']
   return !skipParams.includes(parameterName)
 }

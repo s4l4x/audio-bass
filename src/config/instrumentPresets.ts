@@ -209,6 +209,15 @@ export const monoSynthPreset: AudioGraphConfig = {
         settings: {
           frequency: 440,
           volume: -6,
+          // Filter parameters (flattened for UI)
+          Q: 6,
+          filterType: 'lowpass',
+          rolloff: -24,
+          // Filter envelope parameters (flattened for UI)
+          baseFrequency: 200,
+          octaves: 7,
+          exponent: 2,
+          // Nested parameters for Tone.js
           oscillator: { type: 'sawtooth' },
           filter: { Q: 6, type: 'lowpass', rolloff: -24 },
           envelope: {
