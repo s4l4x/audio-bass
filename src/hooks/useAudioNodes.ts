@@ -22,8 +22,18 @@ const createToneInstance = (type: AudioNodeType, settings: Record<string, any> =
         return new Tone.AMSynth(settings)
       case 'FMSynth':
         return new Tone.FMSynth(settings)
-      case 'DuoSynth':
-        return new Tone.DuoSynth(settings)
+      case 'DuoSynth': {
+        const duoSynth = new Tone.DuoSynth(settings)
+        console.log('🔍 DuoSynth structure:', {
+          voice0: duoSynth.voice0,
+          voice0_oscillator: duoSynth.voice0?.oscillator,
+          voice0_envelope: duoSynth.voice0?.envelope,
+          voice1: duoSynth.voice1,
+          voice1_oscillator: duoSynth.voice1?.oscillator, 
+          voice1_envelope: duoSynth.voice1?.envelope
+        })
+        return duoSynth
+      }
       case 'MonoSynth':
         return new Tone.MonoSynth(settings)
       case 'PluckSynth':
@@ -134,6 +144,42 @@ const transformSettingsForNodeType = (nodeType: AudioNodeType, settings: Record<
       }
       // Remove the original flat property since we've nested it
       delete transformed.oscillatorType
+    }
+  }
+
+  // Handle DuoSynth specific transformations
+  if (nodeType === 'DuoSynth') {
+    // DuoSynth has voice0 and voice1 with nested oscillator and envelope settings
+    console.log('🔧 Processing DuoSynth settings:', settings)
+    
+    // Handle voice0 settings
+    if ('voice0' in settings && typeof settings.voice0 === 'object' && settings.voice0 !== null) {
+      const voice0 = settings.voice0 as Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
+      if ('oscillatorType' in voice0) {
+        transformed.voice0 = {
+          ...voice0,
+          oscillator: {
+            ...(voice0.oscillator || {}),
+            type: voice0.oscillatorType
+          }
+        }
+        delete (transformed.voice0 as any).oscillatorType // eslint-disable-line @typescript-eslint/no-explicit-any
+      }
+    }
+    
+    // Handle voice1 settings
+    if ('voice1' in settings && typeof settings.voice1 === 'object' && settings.voice1 !== null) {
+      const voice1 = settings.voice1 as Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
+      if ('oscillatorType' in voice1) {
+        transformed.voice1 = {
+          ...voice1,
+          oscillator: {
+            ...(voice1.oscillator || {}),
+            type: voice1.oscillatorType
+          }
+        }
+        delete (transformed.voice1 as any).oscillatorType // eslint-disable-line @typescript-eslint/no-explicit-any
+      }
     }
   }
 
@@ -249,30 +295,68 @@ export function useAudioNodes() {
             console.log(`🔧 Setting Tone.js Param ${key}.value =`, value)
             instance[key].value = value
           } else if (typeof value === 'object' && value !== null) {
-            // Handle nested objects like oscillator, envelope
+            // Handle nested objects like oscillator, envelope, voice0, voice1
             if (typeof instance[key] === 'object' && instance[key] !== null) {
-              for (const [nestedKey, nestedValue] of Object.entries(value)) {
-                if (instance[key][nestedKey] !== undefined) {
-                  if (typeof instance[key][nestedKey] === 'object' && instance[key][nestedKey] !== null && 'value' in instance[key][nestedKey]) {
-                    // Nested Tone.js Param (like envelope.attack, envelope.decay, etc.)
-                    console.log(`🔧 Setting Tone.js Param ${key}.${nestedKey}.value =`, nestedValue)
-                    instance[key][nestedKey].value = nestedValue
-                  } else {
-                    // Direct nested property - check if it's settable
-                    try {
-                      const descriptor = Object.getOwnPropertyDescriptor(instance[key], nestedKey)
-                      if (!descriptor || descriptor.set || descriptor.writable !== false) {
-                        console.log(`🔧 Setting direct property ${key}.${nestedKey} =`, nestedValue)
-                        instance[key][nestedKey] = nestedValue
+              const applyNestedSettings = (target: any, settings: any, path: string = key) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+                for (const [nestedKey, nestedValue] of Object.entries(settings)) {
+                  const nestedPath = `${path}.${nestedKey}`
+                  
+                  if (target[nestedKey] !== undefined) {
+                    console.log(`🔍 Analyzing ${nestedPath}:`, {
+                      nestedKey,
+                      nestedValue,
+                      targetType: typeof target[nestedKey],
+                      hasValue: target[nestedKey] && target[nestedKey].hasOwnProperty && target[nestedKey].hasOwnProperty('value'),
+                      isEnvelope: nestedKey === 'envelope',
+                      hasADSR: typeof nestedValue === 'object' && nestedValue !== null && (nestedValue.hasOwnProperty('attack') || nestedValue.hasOwnProperty('decay') || nestedValue.hasOwnProperty('sustain') || nestedValue.hasOwnProperty('release'))
+                    })
+
+                    if (typeof target[nestedKey] === 'object' && target[nestedKey] !== null && target[nestedKey].hasOwnProperty && target[nestedKey].hasOwnProperty('value')) {
+                      // Tone.js Param (like envelope.attack, envelope.decay, etc.)
+                      console.log(`🔧 Setting Tone.js Param ${nestedPath}.value =`, nestedValue)
+                      target[nestedKey].value = nestedValue
+                    } else if (typeof nestedValue === 'object' && nestedValue !== null && typeof target[nestedKey] === 'object' && target[nestedKey] !== null) {
+                      // Check if this is specifically an envelope with ADSR parameters
+                      if (nestedKey === 'envelope' && (nestedValue.hasOwnProperty('attack') || nestedValue.hasOwnProperty('decay') || nestedValue.hasOwnProperty('sustain') || nestedValue.hasOwnProperty('release'))) {
+                        console.log(`🔧 Processing envelope parameters: ${nestedPath}`)
+                        // For envelope objects, handle each ADSR parameter individually
+                        for (const [envParam, envValue] of Object.entries(nestedValue)) {
+                          if (target[nestedKey][envParam] !== undefined) {
+                            if (typeof target[nestedKey][envParam] === 'object' && target[nestedKey][envParam] !== null && target[nestedKey][envParam].hasOwnProperty && target[nestedKey][envParam].hasOwnProperty('value')) {
+                              console.log(`🔧 Setting envelope param ${nestedPath}.${envParam}.value =`, envValue)
+                              target[nestedKey][envParam].value = envValue
+                            } else {
+                              console.log(`🔧 Setting envelope param ${nestedPath}.${envParam} =`, envValue)
+                              target[nestedKey][envParam] = envValue
+                            }
+                          }
+                        }
                       } else {
-                        console.warn(`⚠️ Property ${key}.${nestedKey} is read-only, skipping`)
+                        // For other nested objects (like oscillator), recurse deeper
+                        console.log(`🔧 Processing deeper nested object: ${nestedPath}`)
+                        applyNestedSettings(target[nestedKey], nestedValue, nestedPath)
                       }
-                    } catch (error) {
-                      console.warn(`⚠️ Could not set ${key}.${nestedKey}:`, error)
+                    } else {
+                      // Direct nested property - check if it's settable
+                      try {
+                        const descriptor = Object.getOwnPropertyDescriptor(target, nestedKey)
+                        if (!descriptor || descriptor.set || descriptor.writable !== false) {
+                          console.log(`🔧 Setting direct property ${nestedPath} =`, nestedValue)
+                          target[nestedKey] = nestedValue
+                        } else {
+                          console.warn(`⚠️ Property ${nestedPath} is read-only, skipping`)
+                        }
+                      } catch (error) {
+                        console.warn(`⚠️ Could not set ${nestedPath}:`, error)
+                      }
                     }
+                  } else {
+                    console.warn(`⚠️ Property ${nestedPath} does not exist on target`)
                   }
                 }
               }
+              
+              applyNestedSettings(instance[key], value)
             }
           } else {
             // Handle direct properties

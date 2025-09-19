@@ -65,11 +65,137 @@ export function InstrumentControls({
     onSettingsChange({ envelope })
   }
 
+  // Get instrument type for specialized controls
+  const instrumentType = triggerNodeEntry[1].type
+
+  // Handle DuoSynth voice settings changes (currently unused, but kept for future use)
+  // const handleVoiceChange = (voiceIndex: 0 | 1, voiceSettings: Record<string, unknown>) => {
+  //   onSettingsChange({
+  //     [`voice${voiceIndex}`]: {
+  //       ...((settings[`voice${voiceIndex}`] as Record<string, unknown>) || {}),
+  //       ...voiceSettings
+  //     }
+  //   })
+  // }
+
+  // Handle nested oscillator settings for voices
+  const handleVoiceOscillatorChange = (voiceIndex: 0 | 1, oscSettings: Record<string, unknown>) => {
+    const currentVoice = (settings[`voice${voiceIndex}`] as Record<string, unknown>) || {}
+    const currentOscillator = (currentVoice.oscillator as Record<string, unknown>) || {}
+    
+    console.log(`🎛️ Updating voice${voiceIndex} oscillator:`, oscSettings)
+    console.log(`🎛️ Current voice${voiceIndex}:`, currentVoice)
+    
+    // Only send the oscillator part, not the entire voice with envelope
+    const updatedSettings = {
+      [`voice${voiceIndex}`]: {
+        oscillator: {
+          ...currentOscillator,
+          ...oscSettings
+        }
+        // Deliberately NOT including envelope here
+      }
+    }
+    
+    console.log(`🎛️ Updated settings for voice${voiceIndex}:`, updatedSettings)
+    onSettingsChange(updatedSettings)
+  }
+
+  // Handle nested envelope settings for voices
+  const handleVoiceEnvelopeChange = (voiceIndex: 0 | 1, envSettings: Record<string, unknown>) => {
+    const currentVoice = (settings[`voice${voiceIndex}`] as Record<string, unknown>) || {}
+    const currentEnvelope = (currentVoice.envelope as Record<string, unknown>) || {}
+    
+    console.log(`🎚️ Updating voice${voiceIndex} envelope:`, envSettings)
+    console.log(`🎚️ Current voice${voiceIndex}:`, currentVoice)
+    
+    // Only send the envelope part, not the entire voice with oscillator
+    const updatedSettings = {
+      [`voice${voiceIndex}`]: {
+        envelope: {
+          ...currentEnvelope,
+          ...envSettings
+        }
+        // Deliberately NOT including oscillator here
+      }
+    }
+    
+    console.log(`🎚️ Updated settings for voice${voiceIndex}:`, updatedSettings)
+    onSettingsChange(updatedSettings)
+  }
+
+  // Render DuoSynth-specific controls
+  const renderDuoSynthControls = () => {
+    const voice0 = (settings.voice0 as Record<string, unknown>) || {}
+    const voice1 = (settings.voice1 as Record<string, unknown>) || {}
+    const voice0Osc = (voice0.oscillator as Record<string, unknown>) || {}
+    const voice1Osc = (voice1.oscillator as Record<string, unknown>) || {}
+
+    return (
+      <Stack gap="md">
+        <Text fw={500} size="sm">Voice Configuration</Text>
+        
+        {/* Voice 0 Controls */}
+        <Stack gap="xs">
+          <Text size="xs" c="dimmed" fw={500}>Voice 0</Text>
+          <Group gap="md">
+            <div style={{ flex: 1 }}>
+              <Text size="xs" mb="4px">Oscillator Type</Text>
+              <Select
+                value={voice0Osc.type as string || 'sine'}
+                onChange={(value) => {
+                  console.log('🎛️ Voice 0 oscillator type changed to:', value)
+                  handleVoiceOscillatorChange(0, { type: value })
+                }}
+                data={[
+                  { value: 'sine', label: 'Sine' },
+                  { value: 'sawtooth', label: 'Sawtooth' },
+                  { value: 'square', label: 'Square' },
+                  { value: 'triangle', label: 'Triangle' }
+                ]}
+                size="xs"
+              />
+            </div>
+          </Group>
+        </Stack>
+
+        {/* Voice 1 Controls */}
+        <Stack gap="xs">
+          <Text size="xs" c="dimmed" fw={500}>Voice 1</Text>
+          <Group gap="md">
+            <div style={{ flex: 1 }}>
+              <Text size="xs" mb="4px">Oscillator Type</Text>
+              <Select
+                value={voice1Osc.type as string || 'sawtooth'}
+                onChange={(value) => {
+                  console.log('🎛️ Voice 1 oscillator type changed to:', value)
+                  handleVoiceOscillatorChange(1, { type: value })
+                }}
+                data={[
+                  { value: 'sine', label: 'Sine' },
+                  { value: 'sawtooth', label: 'Sawtooth' },
+                  { value: 'square', label: 'Square' },
+                  { value: 'triangle', label: 'Triangle' }
+                ]}
+                size="xs"
+              />
+            </div>
+          </Group>
+        </Stack>
+      </Stack>
+    )
+  }
+
   // Generate parameter controls based on settings
   const renderParameterControls = () => {
     const controls: ReactElement[] = []
 
     Object.entries(settings).forEach(([paramName, paramValue]) => {
+      // Skip voice parameters for DuoSynth as they are handled separately
+      if (instrumentType === 'DuoSynth' && (paramName === 'voice0' || paramName === 'voice1')) {
+        return
+      }
+
       if (!shouldShowParameter(paramName)) {
         return
       }
@@ -181,26 +307,60 @@ export function InstrumentControls({
 
       {renderParameterControls()}
 
-      <ADSRControls
-        instrumentType={triggerType === 'sustained' ? 'sustained' : 'percussive'}
-        initialSettings={settings.envelope as ADSRSettings | SustainedADSRSettings}
-        ranges={triggerType === 'sustained' ? undefined : {
-          attack: [0.001, 0.1],
-          decay: [0.001, 2.0],
-          sustain: [0.0, 1.0],
-          release: [0.001, 3.0]
-        }}
-        onSettingsChange={handleADSRChange}
-        totalDuration={(() => {
-          const envelope = settings.envelope as ADSRSettings | SustainedADSRSettings
-          if (!envelope) return 0
-          
-          const baseTime = envelope.attack + envelope.decay + envelope.release
-          return triggerType === 'sustained' ? 
-            baseTime + 1.0 :
-            baseTime + (('sustainDuration' in envelope) ? envelope.sustainDuration : 0)
-        })()}
-      />
+      {/* DuoSynth-specific controls */}
+      {instrumentType === 'DuoSynth' && renderDuoSynthControls()}
+
+      {/* Main envelope controls - only for non-DuoSynth instruments */}
+      {instrumentType !== 'DuoSynth' && (
+        <Stack gap="xs">
+          <ADSRControls
+            instrumentType={triggerType === 'sustained' ? 'sustained' : 'percussive'}
+            initialSettings={settings.envelope as ADSRSettings | SustainedADSRSettings}
+            ranges={triggerType === 'sustained' ? undefined : {
+              attack: [0.001, 0.1],
+              decay: [0.001, 2.0],
+              sustain: [0.0, 1.0],
+              release: [0.001, 3.0]
+            }}
+            onSettingsChange={handleADSRChange}
+            totalDuration={(() => {
+              const envelope = settings.envelope as ADSRSettings | SustainedADSRSettings
+              if (!envelope) return 0
+              
+              const baseTime = envelope.attack + envelope.decay + envelope.release
+              return triggerType === 'sustained' ? 
+                baseTime + 1.0 :
+                baseTime + (('sustainDuration' in envelope) ? envelope.sustainDuration : 0)
+            })()}
+          />
+        </Stack>
+      )}
+
+      {/* Voice-specific envelope controls for DuoSynth */}
+      {instrumentType === 'DuoSynth' && (
+        <>
+          <Stack gap="xs">
+            <Text fw={500} size="sm">Voice 0 Envelope</Text>
+            <ADSRControls
+              instrumentType={triggerType === 'sustained' ? 'sustained' : 'percussive'}
+              initialSettings={((settings.voice0 as Record<string, unknown>)?.envelope as ADSRSettings) || {
+                attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0
+              }}
+              onSettingsChange={(envelope) => handleVoiceEnvelopeChange(0, envelope as unknown as Record<string, unknown>)}
+            />
+          </Stack>
+          <Stack gap="xs">
+            <Text fw={500} size="sm">Voice 1 Envelope</Text>
+            <ADSRControls
+              instrumentType={triggerType === 'sustained' ? 'sustained' : 'percussive'}
+              initialSettings={((settings.voice1 as Record<string, unknown>)?.envelope as ADSRSettings) || {
+                attack: 0.01, decay: 0.3, sustain: 0.3, release: 1.0
+              }}
+              onSettingsChange={(envelope) => handleVoiceEnvelopeChange(1, envelope as unknown as Record<string, unknown>)}
+            />
+          </Stack>
+        </>
+      )}
 
       <JsonModal
         opened={jsonModalOpened}
