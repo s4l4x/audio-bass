@@ -82,12 +82,14 @@ export function InstrumentControls({
       const key = `${paramName}-control`
 
       if (metadata.controlType === 'slider') {
-        let sliderValue = paramValue
-        const displayValue = paramValue
+        // Ensure paramValue is a number for slider controls
+        const numericValue = typeof paramValue === 'number' ? paramValue : 0
+        let sliderValue = numericValue
+        const displayValue = numericValue
 
         // Handle logarithmic scaling for frequency
         if (metadata.scale === 'logarithmic' && metadata.toSlider) {
-          sliderValue = metadata.toSlider(paramValue)
+          sliderValue = metadata.toSlider(numericValue)
         }
 
         controls.push(
@@ -131,7 +133,7 @@ export function InstrumentControls({
               {paramName.charAt(0).toUpperCase() + paramName.slice(1)}
             </Text>
             <Select
-              value={paramValue}
+              value={typeof paramValue === 'string' ? paramValue : ''}
               onChange={(value) => onSettingsChange({ [paramName]: value })}
               data={metadata.options}
               size="xs"
@@ -174,14 +176,14 @@ export function InstrumentControls({
 
       <WaveformVisualization
         getWaveformData={getWaveformData}
-        adsrSettings={settings.envelope}
+        adsrSettings={settings.envelope as ADSRSettings | SustainedADSRSettings}
       />
 
       {renderParameterControls()}
 
       <ADSRControls
         instrumentType={triggerType === 'sustained' ? 'sustained' : 'percussive'}
-        initialSettings={settings.envelope}
+        initialSettings={settings.envelope as ADSRSettings | SustainedADSRSettings}
         ranges={triggerType === 'sustained' ? undefined : {
           attack: [0.001, 0.1],
           decay: [0.001, 2.0],
@@ -189,10 +191,15 @@ export function InstrumentControls({
           release: [0.001, 3.0]
         }}
         onSettingsChange={handleADSRChange}
-        totalDuration={triggerType === 'sustained' ? 
-          settings.envelope.attack + settings.envelope.decay + 1.0 + settings.envelope.release :
-          settings.envelope.attack + settings.envelope.decay + settings.envelope.sustainDuration + settings.envelope.release
-        }
+        totalDuration={(() => {
+          const envelope = settings.envelope as ADSRSettings | SustainedADSRSettings
+          if (!envelope) return 0
+          
+          const baseTime = envelope.attack + envelope.decay + envelope.release
+          return triggerType === 'sustained' ? 
+            baseTime + 1.0 :
+            baseTime + (('sustainDuration' in envelope) ? envelope.sustainDuration : 0)
+        })()}
       />
 
       <JsonModal
