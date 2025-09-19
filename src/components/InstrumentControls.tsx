@@ -101,10 +101,10 @@ export function InstrumentControls({
   const handleVoiceOscillatorChange = (voiceIndex: 0 | 1, oscSettings: Record<string, unknown>) => {
     const currentVoice = (settings[`voice${voiceIndex}`] as Record<string, unknown>) || {}
     const currentOscillator = (currentVoice.oscillator as Record<string, unknown>) || {}
-    
+
     console.log(`🎛️ Updating voice${voiceIndex} oscillator:`, oscSettings)
     console.log(`🎛️ Current voice${voiceIndex}:`, currentVoice)
-    
+
     // Only send the oscillator part, not the entire voice with envelope
     const updatedSettings = {
       [`voice${voiceIndex}`]: {
@@ -115,7 +115,7 @@ export function InstrumentControls({
         // Deliberately NOT including envelope here
       }
     }
-    
+
     console.log(`🎛️ Updated settings for voice${voiceIndex}:`, updatedSettings)
     onSettingsChange(updatedSettings)
   }
@@ -124,10 +124,10 @@ export function InstrumentControls({
   const handleVoiceEnvelopeChange = (voiceIndex: 0 | 1, envSettings: Record<string, unknown>) => {
     const currentVoice = (settings[`voice${voiceIndex}`] as Record<string, unknown>) || {}
     const currentEnvelope = (currentVoice.envelope as Record<string, unknown>) || {}
-    
+
     console.log(`🎚️ Updating voice${voiceIndex} envelope:`, envSettings)
     console.log(`🎚️ Current voice${voiceIndex}:`, currentVoice)
-    
+
     // Only send the envelope part, not the entire voice with oscillator
     const updatedSettings = {
       [`voice${voiceIndex}`]: {
@@ -138,7 +138,7 @@ export function InstrumentControls({
         // Deliberately NOT including oscillator here
       }
     }
-    
+
     console.log(`🎚️ Updated settings for voice${voiceIndex}:`, updatedSettings)
     onSettingsChange(updatedSettings)
   }
@@ -153,7 +153,7 @@ export function InstrumentControls({
     return (
       <Stack gap="md">
         <Text fw={500} size="sm">Voice Configuration</Text>
-        
+
         {/* Voice 0 Controls */}
         <Stack gap="xs">
           <Text size="xs" c="dimmed" fw={500}>Voice 0</Text>
@@ -263,7 +263,7 @@ export function InstrumentControls({
               step={metadata.range?.step || 1}
               size={sliderSize}
               styles={sliderStyles}
-              label={metadata.scale === 'logarithmic' && metadata.fromSlider ? 
+              label={metadata.scale === 'logarithmic' && metadata.fromSlider ?
                 (sliderValue) => {
                   const actualValue = metadata.fromSlider!(sliderValue)
                   return `${actualValue} ${metadata.unit || ''}`
@@ -295,28 +295,28 @@ export function InstrumentControls({
   return (
     <Stack gap="md">
       <Group justify="space-between" align="center">
-        <Stack gap={4}>
-          <Title order={4} size="xl" fw={triggerType === 'sustained' ? '500' : '400'}>
-            {instrumentName}
-          </Title>
+        <Stack gap={4} w="100%">
+          <Group w="100%" align="center" justify="space-between">
+            <Title order={4} size="xl" fw={triggerType === 'sustained' ? '500' : '400'}>
+              {instrumentName}
+            </Title>
+            <JsonViewButton
+              onOpenModal={() => setJsonModalOpened(true)}
+              color="gray"
+              size="xs"
+              width={20}
+              height={20}
+            />
+          </Group>
           {instrumentDescription && (
             <Text size="sm" c="dimmed" style={{ maxWidth: '400px' }}>
               {instrumentDescription}
             </Text>
           )}
-        </Stack>
-        <Group gap="sm" align="center">
-          <JsonViewButton
-            onOpenModal={() => setJsonModalOpened(true)}
-            color="gray"
-            size="xs"
-            width={30}
-            height={30}
-          />
           <PlayButton
             triggerType={triggerType === 'momentary' ? 'pulse' : 'sustained'}
             isPlaying={isPlaying}
-            onTrigger={onTrigger || (() => {})}
+            onTrigger={onTrigger || (() => { })}
             onPlay={onPlay}
             onStop={onStop}
             color={triggerType === 'sustained' ? 'blue' : 'red'}
@@ -324,7 +324,9 @@ export function InstrumentControls({
             width={30}
             height={30}
           />
-        </Group>
+        </Stack>
+
+
       </Group>
 
       <WaveformVisualization
@@ -353,9 +355,9 @@ export function InstrumentControls({
             totalDuration={(() => {
               const envelope = settings.envelope as ADSRSettings | SustainedADSRSettings
               if (!envelope) return 0
-              
+
               const baseTime = envelope.attack + envelope.decay + envelope.release
-              return triggerType === 'sustained' ? 
+              return triggerType === 'sustained' ?
                 baseTime + 1.0 :
                 baseTime + (('sustainDuration' in envelope) ? envelope.sustainDuration : 0)
             })()}

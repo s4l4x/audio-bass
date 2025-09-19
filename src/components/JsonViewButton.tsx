@@ -1,5 +1,5 @@
 import { Button, type MantineSize } from '@mantine/core'
-import { IconInfoSmall as Icon } from '@tabler/icons-react'
+import { IconCode as Icon } from '@tabler/icons-react'
 import { useState, useEffect } from 'react'
 
 export interface JsonViewButtonProps {
@@ -34,7 +34,6 @@ export function JsonViewButton({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: '9999px',
     padding: 0
   }
 
@@ -53,12 +52,12 @@ export function JsonViewButton({
       onContextMenu={(e) => {
         e.preventDefault() // Prevent context menu
       }}
-      variant="outline"
+      variant="light"
       color={color}
       size={size}
       style={baseStyle}
     >
-      <Icon size={30} stroke={1.5}/>
+      <Icon size={16} stroke={1.5}/>
     </Button>
   )
 }
