@@ -104,62 +104,155 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
 
       // Generate waveform using Tone.Offline
       const buffer = await Tone.Offline((context: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-        if (nodeDefinition.type === 'MembraneSynth') {
-          // Provide safe defaults for MembraneSynth
-          const membraneSettings = {
-            pitchDecay: settings.pitchDecay || 0.05,
-            octaves: settings.octaves || 10,
-            volume: settings.volume || -6,
-            oscillator: {
-              type: settings.oscillatorType || settings.oscillator?.type || 'sine'
-            },
-            envelope: {
-              attack: settings.envelope?.attack || 0.001,
-              decay: settings.envelope?.decay || 0.4,
-              sustain: settings.envelope?.sustain || 0.01,
-              release: settings.envelope?.release || 1.4,
-              sustainDuration: settings.envelope?.sustainDuration || 0.1,
-              attackCurve: settings.envelope?.attackCurve || 'exponential',
-              decayCurve: settings.envelope?.decayCurve || 'exponential',
-              releaseCurve: settings.envelope?.releaseCurve || 'exponential'
+        let synth: any = null // eslint-disable-line @typescript-eslint/no-explicit-any
+        let releaseTime = 2.0 // Default duration
+
+        switch (nodeDefinition.type) {
+          case 'Synth': {
+            const synthSettings = {
+              volume: settings.volume || -6,
+              oscillator: {
+                type: settings.oscillatorType || settings.oscillator?.type || 'sine'
+              },
+              envelope: {
+                attack: settings.envelope?.attack || 0.01,
+                decay: settings.envelope?.decay || 0.3,
+                sustain: settings.envelope?.sustain || 0.3,
+                release: settings.envelope?.release || 1.0
+              }
             }
+            synth = new Tone.Synth(synthSettings)
+            synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
+            synth.triggerAttack(settings.frequency || 440, 0)
+            releaseTime = synthSettings.envelope.attack + synthSettings.envelope.decay + 1.0
+            synth.triggerRelease(releaseTime)
+            break
           }
           
-          const synth = new Tone.MembraneSynth(membraneSettings)
-          
-          synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
-          synth.triggerAttack('C2', 0)
-          
-          const releaseTime = membraneSettings.envelope.attack + membraneSettings.envelope.decay + 
-                             membraneSettings.envelope.sustainDuration
-          synth.triggerRelease(releaseTime)
-          
-        } else if (nodeDefinition.type === 'Synth') {
-          // Provide safe defaults for Synth
-          const synthSettings = {
-            volume: settings.volume || -6,
-            oscillator: {
-              type: settings.oscillatorType || settings.oscillator?.type || 'sine'
-            },
-            envelope: {
-              attack: settings.envelope?.attack || 0.01,
-              decay: settings.envelope?.decay || 0.3,
-              sustain: settings.envelope?.sustain || 0.3,
-              release: settings.envelope?.release || 1.0,
-              attackCurve: settings.envelope?.attackCurve || 'exponential',
-              decayCurve: settings.envelope?.decayCurve || 'exponential',
-              releaseCurve: settings.envelope?.releaseCurve || 'exponential'
+          case 'MembraneSynth': {
+            const membraneSettings = {
+              pitchDecay: settings.pitchDecay || 0.05,
+              octaves: settings.octaves || 10,
+              volume: settings.volume || -6,
+              oscillator: {
+                type: settings.oscillatorType || settings.oscillator?.type || 'sine'
+              },
+              envelope: {
+                attack: settings.envelope?.attack || 0.001,
+                decay: settings.envelope?.decay || 0.4,
+                sustain: settings.envelope?.sustain || 0.01,
+                release: settings.envelope?.release || 1.4,
+                sustainDuration: settings.envelope?.sustainDuration || 0.1
+              }
             }
+            synth = new Tone.MembraneSynth(membraneSettings)
+            synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
+            synth.triggerAttack('C2', 0)
+            releaseTime = membraneSettings.envelope.attack + membraneSettings.envelope.decay + 
+                         membraneSettings.envelope.sustainDuration
+            synth.triggerRelease(releaseTime)
+            break
           }
           
-          const synth = new Tone.Synth(synthSettings)
+          case 'AMSynth': {
+            synth = new Tone.AMSynth(settings)
+            synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
+            synth.triggerAttack(settings.frequency || 440, 0)
+            releaseTime = 2.0
+            synth.triggerRelease(releaseTime)
+            break
+          }
           
-          synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
-          synth.triggerAttack(settings.frequency || 440, 0)
+          case 'FMSynth': {
+            synth = new Tone.FMSynth(settings)
+            synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
+            synth.triggerAttack(settings.frequency || 440, 0)
+            releaseTime = 2.0
+            synth.triggerRelease(releaseTime)
+            break
+          }
           
-          // For sustained instruments, use 1 second of sustain for waveform visualization
-          const releaseTime = synthSettings.envelope.attack + synthSettings.envelope.decay + 1.0
-          synth.triggerRelease(releaseTime)
+          case 'DuoSynth': {
+            synth = new Tone.DuoSynth(settings)
+            synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
+            synth.triggerAttack(settings.frequency || 440, 0)
+            releaseTime = 2.0
+            synth.triggerRelease(releaseTime)
+            break
+          }
+          
+          case 'MonoSynth': {
+            synth = new Tone.MonoSynth(settings)
+            synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
+            synth.triggerAttack(settings.frequency || 440, 0)
+            releaseTime = 2.0
+            synth.triggerRelease(releaseTime)
+            break
+          }
+          
+          case 'PluckSynth': {
+            synth = new Tone.PluckSynth(settings)
+            synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
+            synth.triggerAttack(settings.frequency || 440, 0)
+            releaseTime = 2.0
+            synth.triggerRelease(releaseTime)
+            break
+          }
+          
+          case 'PolySynth': {
+            synth = new Tone.PolySynth(Tone.Synth, settings)
+            synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
+            synth.triggerAttack(settings.frequency || 440, 0)
+            releaseTime = 2.0
+            synth.triggerRelease(settings.frequency || 440, releaseTime)
+            break
+          }
+          
+          case 'MetalSynth': {
+            synth = new Tone.MetalSynth(settings)
+            synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
+            synth.triggerAttack(0) // MetalSynth doesn't take a note parameter
+            releaseTime = 1.5
+            synth.triggerRelease(releaseTime)
+            break
+          }
+          
+          case 'NoiseSynth': {
+            const noiseSettings = {
+              volume: settings.volume || -6,
+              noise: { type: settings.noise?.type || 'white' },
+              envelope: {
+                attack: settings.envelope?.attack || 0.005,
+                decay: settings.envelope?.decay || 0.3,
+                sustain: settings.envelope?.sustain || 0.0,
+                release: settings.envelope?.release || 0.3
+              }
+            }
+            synth = new Tone.NoiseSynth(noiseSettings)
+            synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
+            synth.triggerAttack(0) // NoiseSynth doesn't take a note parameter
+            releaseTime = noiseSettings.envelope.attack + noiseSettings.envelope.decay + 0.1
+            synth.triggerRelease(releaseTime)
+            break
+          }
+          
+          case 'Sampler': {
+            // Sampler needs URLs, use a simple fallback
+            const samplerSettings = {
+              ...settings,
+              urls: settings.urls || { 'C4': 'https://tonejs.github.io/audio/berklee/ahh_c4.mp3' }
+            }
+            synth = new Tone.Sampler(samplerSettings)
+            synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
+            synth.triggerAttack('C4', 0)
+            releaseTime = 2.0
+            synth.triggerRelease('C4', releaseTime)
+            break
+          }
+          
+          default:
+            console.warn('⚠️ Unsupported instrument type for waveform generation:', nodeDefinition.type)
+            return
         }
       }, bufferDuration)
       
