@@ -7,7 +7,7 @@ import { execSync } from 'child_process'
 const getGitCommitHash = () => {
   try {
     return execSync('git rev-parse --short HEAD').toString().trim()
-  } catch (error) {
+  } catch {
     return 'unknown'
   }
 }
@@ -16,7 +16,7 @@ const getGitCommitHash = () => {
 const getGitCommitDate = () => {
   try {
     return execSync('git log -1 --format=%cd --date=short').toString().trim()
-  } catch (error) {
+  } catch {
     return 'unknown'
   }
 }
