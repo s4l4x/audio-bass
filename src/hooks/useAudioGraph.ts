@@ -93,6 +93,19 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
         const sustainDuration = 1.0 // Show 1 second of sustain for visualization
         bufferDuration = settings.envelope.attack + settings.envelope.decay + 
                         sustainDuration + settings.envelope.release + 0.1
+      } else if (nodeDefinition.type === 'MetalSynth') {
+        // MetalSynth has envelope: attack: 0.001, decay: 1.4, release: 0.2, sustain: 0
+        const envelope = settings.envelope || {}
+        const attackTime = envelope.attack || 0.001
+        const decayTime = envelope.decay || 1.4 
+        const releaseTime = envelope.release || 0.2
+        bufferDuration = attackTime + decayTime + releaseTime + 0.1
+      } else if (nodeDefinition.type === 'NoiseSynth' && settings.envelope) {
+        // NoiseSynth uses envelope for timing
+        bufferDuration = (settings.envelope.attack || 0.005) + 
+                        (settings.envelope.decay || 0.3) + 
+                        (settings.envelope.sustain || 0.0) + 
+                        (settings.envelope.release || 0.3) + 0.1
       }
       
       // Get Tone module for waveform generation
@@ -211,8 +224,9 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
           case 'MetalSynth': {
             synth = new Tone.MetalSynth(settings)
             synth.connect((context as any).destination) // eslint-disable-line @typescript-eslint/no-explicit-any
-            synth.triggerAttack(0) // MetalSynth doesn't take a note parameter
-            releaseTime = 1.5
+            const frequency = settings.frequency || 440
+            synth.triggerAttack(frequency, 0) // MetalSynth needs a frequency parameter
+            releaseTime = (settings.envelope?.attack || 0.001) + (settings.envelope?.decay || 1.4)
             synth.triggerRelease(releaseTime)
             break
           }
@@ -554,21 +568,51 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
           // For bass kick style - use triggerAttack and delayed triggerRelease
           // This lets the instrument's envelope handle the amplitude curve naturally
           
-          // Calculate when to trigger release (after attack + decay + sustainDuration)
-          const envelope = node.settings.envelope || {}
-          const attackTime = envelope.attack || 0.001
-          const decayTime = envelope.decay || 0.4
-          const sustainDuration = envelope.sustainDuration || 0.1
-          const releaseTime = envelope.release || 1.4
+          // Calculate timing based on instrument type
+          let releaseStartTime: number
+          let totalDuration: number
           
-          const releaseStartTime = attackTime + decayTime + sustainDuration
-          const totalDuration = releaseStartTime + releaseTime
+          if (node.type === 'MetalSynth') {
+            // MetalSynth has envelope: attack: 0.001, decay: 1.4, release: 0.2, sustain: 0
+            const envelope = node.settings.envelope || {}
+            const attackTime = envelope.attack || 0.001
+            const decayTime = envelope.decay || 1.4
+            const releaseTime = envelope.release || 0.2
+            
+            // MetalSynth has sustain=0, so it's attack+decay, then release
+            releaseStartTime = attackTime + decayTime
+            totalDuration = releaseStartTime + releaseTime
+          } else if (node.type === 'NoiseSynth') {
+            // Use NoiseSynth envelope settings
+            const envelope = node.settings.envelope || {}
+            const attackTime = envelope.attack || 0.005
+            const decayTime = envelope.decay || 0.3
+            const releaseTime = envelope.release || 0.3
+            
+            releaseStartTime = attackTime + decayTime + 0.1 // Short sustain for noise
+            totalDuration = releaseStartTime + releaseTime
+          } else {
+            // Standard envelope-based instruments (MembraneSynth, etc.)
+            const envelope = node.settings.envelope || {}
+            const attackTime = envelope.attack || 0.001
+            const decayTime = envelope.decay || 0.4
+            const sustainDuration = envelope.sustainDuration || 0.1
+            const releaseTime = envelope.release || 1.4
+            
+            releaseStartTime = attackTime + decayTime + sustainDuration
+            totalDuration = releaseStartTime + releaseTime
+          }
           
           // Handle different instrument types for triggering
-          if (node.type === 'NoiseSynth' || node.type === 'MetalSynth') {
-            // NoiseSynth and MetalSynth don't need a note parameter
+          if (node.type === 'NoiseSynth') {
+            // NoiseSynth doesn't need a note parameter
             console.log(`🔊 Triggering ${node.type} attack (no note)`)
             toneNode.triggerAttack()
+          } else if (node.type === 'MetalSynth') {
+            // MetalSynth needs a frequency/note parameter
+            const noteToPlay = note || node.settings.frequency || 440
+            console.log(`🔊 Triggering MetalSynth attack with note:`, noteToPlay)
+            toneNode.triggerAttack(noteToPlay)
           } else {
             // Other instruments need a note
             const noteToPlay = note || 'C2'
@@ -597,15 +641,15 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
           }
           
           // Handle different instrument types for sustained triggering
-          if (node.type === 'NoiseSynth' || node.type === 'MetalSynth') {
-            // NoiseSynth and MetalSynth don't need a note parameter
+          if (node.type === 'NoiseSynth') {
+            // NoiseSynth doesn't need a note parameter
             console.log(`🔊 Triggering sustained ${node.type} attack (no note)`)
             toneNode.triggerAttack()
           } else {
-            // Other instruments need a note
+            // MetalSynth and other instruments need a note parameter
             const currentFrequency = node.settings.frequency || 440
             const noteToPlay = note || currentFrequency
-            console.log('🎹 Triggering sustained note (triggerAttack):', noteToPlay)
+            console.log(`🎹 Triggering sustained ${node.type} note (triggerAttack):`, noteToPlay)
             toneNode.triggerAttack(noteToPlay)
           }
           setIsPlaying(true)

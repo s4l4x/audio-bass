@@ -81,11 +81,42 @@ export const parameterMetadata: Record<string, ParameterMetadata> = {
     controlType: 'slider',
     unit: '',
     range: { min: 0.1, max: 30, step: 0.1 }
+  },
+  
+  // MetalSynth specific parameters
+  harmonicity: {
+    controlType: 'slider',
+    unit: '',
+    range: { min: 0.1, max: 10, step: 0.1 }
+  },
+  
+  modulationIndex: {
+    controlType: 'slider',
+    unit: '',
+    range: { min: 1, max: 100, step: 1 }
   }
 }
 
-// Helper function to get metadata for a parameter
-export function getParameterMetadata(parameterName: string): ParameterMetadata | null {
+// Context-aware parameter metadata for instrument-specific parameters
+const instrumentSpecificMetadata: Record<string, Record<string, ParameterMetadata>> = {
+  MetalSynth: {
+    resonance: {
+      controlType: 'slider',
+      unit: 'Hz',
+      range: { min: 0, max: 7000, step: 50 },
+      formatDisplay: (value: number) => value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toString()
+    }
+  }
+}
+
+// Helper function to get metadata for a parameter with instrument context
+export function getParameterMetadata(parameterName: string, instrumentType?: string): ParameterMetadata | null {
+  // Check for instrument-specific metadata first
+  if (instrumentType && instrumentSpecificMetadata[instrumentType]?.[parameterName]) {
+    return instrumentSpecificMetadata[instrumentType][parameterName]
+  }
+  
+  // Fall back to general metadata
   return parameterMetadata[parameterName] || null
 }
 

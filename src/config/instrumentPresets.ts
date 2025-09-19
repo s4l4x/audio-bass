@@ -281,7 +281,13 @@ export const metalSynthPreset: AudioGraphConfig = {
           harmonicity: 5.1,
           modulationIndex: 32,
           resonance: 4000,
-          octaves: 1.5
+          octaves: 1.5,
+          envelope: {
+            attack: 0.001,
+            decay: 1.4,
+            release: 0.2,
+            sustain: 0
+          }
         }
       },
       output: { type: 'Output', settings: {} }

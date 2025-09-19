@@ -200,7 +200,7 @@ export function InstrumentControls({
         return
       }
 
-      const metadata = getParameterMetadata(paramName)
+      const metadata = getParameterMetadata(paramName, instrumentType)
       if (!metadata) {
         return
       }
