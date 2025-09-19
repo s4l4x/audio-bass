@@ -4,7 +4,7 @@ import { getToneModule } from '../utils/toneLoader'
 import { useAudioNodes } from './useAudioNodes'
 import { useGraphConnections } from './useGraphConnections'
 import { useModulationMatrix } from './useModulationMatrix'
-import type { AudioGraphConfig, AudioGraphState } from '../types/audioGraph'
+import type { AudioGraphConfig, AudioGraphState, NodeInstance } from '../types/audioGraph'
 
 export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
   const [config, updateConfig] = useImmer<AudioGraphConfig | null>(initialConfig)
@@ -22,7 +22,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
   
   // Refs to store current state for waveform generation
   const currentConfigRef = useRef<AudioGraphConfig | null>(config)
-  const currentNodesRef = useRef<Map<string, any>>(new Map())
+  const currentNodesRef = useRef<Map<string, NodeInstance>>(new Map())
 
   // Use the specialized hooks for managing different aspects (always call hooks)
   const { 
