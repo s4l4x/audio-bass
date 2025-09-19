@@ -60,13 +60,32 @@ export function InstrumentControls({
   const triggerType = config.graph.trigger
   const instrumentName = config.name
 
+  // Get instrument type for specialized controls
+  const instrumentType = triggerNodeEntry[1].type
+
+  // Get instrument description
+  const getInstrumentDescription = (instrumentType: string, name: string) => {
+    const descriptions: Record<string, string> = {
+      'Synth': 'Basic oscillator synthesis with ADSR envelope control',
+      'MembraneSynth': 'Physical modeling synthesis for bass kick drums and percussive sounds',
+      'AMSynth': 'Amplitude modulation synthesis creates tremolo and harmonic sidebands',
+      'FMSynth': 'Frequency modulation synthesis for bell-like, metallic, and complex harmonic timbres',
+      'DuoSynth': 'Two oscillator synthesis with independent voice control and envelopes',
+      'MonoSynth': 'Monophonic synthesis with filter envelope for classic analog-style sounds',
+      'PluckSynth': 'Karplus-Strong synthesis for modeling plucked string instruments',
+      'MetalSynth': 'Frequency modulation optimized for metallic percussion and bell sounds',
+      'NoiseSynth': 'Noise-based synthesis perfect for percussion, drums, and sound effects',
+      'PolySynth': 'Polyphonic synthesis for playing chords and multiple simultaneous notes'
+    }
+    return descriptions[instrumentType] || ''
+  }
+
+  const instrumentDescription = getInstrumentDescription(instrumentType, instrumentName)
+
   // Handle ADSR settings changes
   const handleADSRChange = (envelope: ADSRSettings | SustainedADSRSettings) => {
     onSettingsChange({ envelope })
   }
-
-  // Get instrument type for specialized controls
-  const instrumentType = triggerNodeEntry[1].type
 
   // Handle DuoSynth voice settings changes (currently unused, but kept for future use)
   // const handleVoiceChange = (voiceIndex: 0 | 1, voiceSettings: Record<string, unknown>) => {
@@ -276,9 +295,16 @@ export function InstrumentControls({
   return (
     <Stack gap="md">
       <Group justify="space-between" align="center">
-        <Title order={4} size="xl" fw={triggerType === 'sustained' ? '500' : '400'}>
-          {instrumentName}
-        </Title>
+        <Stack gap={4}>
+          <Title order={4} size="xl" fw={triggerType === 'sustained' ? '500' : '400'}>
+            {instrumentName}
+          </Title>
+          {instrumentDescription && (
+            <Text size="sm" c="dimmed" style={{ maxWidth: '400px' }}>
+              {instrumentDescription}
+            </Text>
+          )}
+        </Stack>
         <Group gap="sm" align="center">
           <JsonViewButton
             onOpenModal={() => setJsonModalOpened(true)}
