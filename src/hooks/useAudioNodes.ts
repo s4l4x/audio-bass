@@ -384,7 +384,7 @@ export function useAudioNodes() {
           console.error('❌ Failed to apply PolySynth voice settings:', error)
         }
         // Create new settings object without voice to avoid double-processing
-        const { voice: _, ...remainingSettings } = transformedSettings
+        const { voice, ...remainingSettings } = transformedSettings
         settingsToProcess = remainingSettings
       }
       
