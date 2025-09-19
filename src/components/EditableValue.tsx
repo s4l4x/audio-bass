@@ -75,7 +75,7 @@ export function EditableValue({
   }
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    let inputValue = event.currentTarget.value.replace(` ${unit}`, '').replace(unit, '')
+    const inputValue = event.currentTarget.value.replace(` ${unit}`, '').replace(unit, '')
     // Allow users to type freely - only do minimal cleanup
     setTempValue(inputValue)
   }

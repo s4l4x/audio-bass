@@ -64,7 +64,7 @@ export function InstrumentControls({
   const instrumentType = triggerNodeEntry[1].type
 
   // Get instrument description
-  const getInstrumentDescription = (instrumentType: string, name: string) => {
+  const getInstrumentDescription = (instrumentType: string) => {
     const descriptions: Record<string, string> = {
       'Synth': 'Basic oscillator synthesis with ADSR envelope control',
       'MembraneSynth': 'Physical modeling synthesis for bass kick drums and percussive sounds',
@@ -80,7 +80,7 @@ export function InstrumentControls({
     return descriptions[instrumentType] || ''
   }
 
-  const instrumentDescription = getInstrumentDescription(instrumentType, instrumentName)
+  const instrumentDescription = getInstrumentDescription(instrumentType)
 
   // Handle ADSR settings changes
   const handleADSRChange = (envelope: ADSRSettings | SustainedADSRSettings) => {

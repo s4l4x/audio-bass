@@ -1,4 +1,4 @@
-import { Button, type MantineSize } from '@mantine/core'
+import { Button, Text, type MantineSize } from '@mantine/core'
 import { IconPlayerPlayFilled } from '@tabler/icons-react'
 import { useState, useEffect } from 'react'
 
@@ -42,6 +42,7 @@ export function PlayButton({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: "9999px",
     padding: 0
   }
 

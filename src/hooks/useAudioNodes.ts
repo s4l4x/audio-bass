@@ -362,7 +362,7 @@ export function useAudioNodes() {
                       targetType: typeof target[nestedKey],
                       hasValue: target[nestedKey] && typeof target[nestedKey] === 'object' && 'value' in target[nestedKey],
                       isEnvelope: nestedKey === 'envelope',
-                      hasADSR: typeof nestedValue === 'object' && nestedValue !== null && (nestedValue.hasOwnProperty('attack') || nestedValue.hasOwnProperty('decay') || nestedValue.hasOwnProperty('sustain') || nestedValue.hasOwnProperty('release'))
+                      hasADSR: typeof nestedValue === 'object' && nestedValue !== null && (Object.prototype.hasOwnProperty.call(nestedValue, 'attack') || Object.prototype.hasOwnProperty.call(nestedValue, 'decay') || Object.prototype.hasOwnProperty.call(nestedValue, 'sustain') || Object.prototype.hasOwnProperty.call(nestedValue, 'release'))
                     })
 
                     if (typeof target[nestedKey] === 'object' && target[nestedKey] !== null && 'value' in target[nestedKey]) {
@@ -371,7 +371,7 @@ export function useAudioNodes() {
                       target[nestedKey].value = nestedValue
                     } else if (typeof nestedValue === 'object' && nestedValue !== null && typeof target[nestedKey] === 'object' && target[nestedKey] !== null) {
                       // Check if this is specifically an envelope with ADSR parameters
-                      if (nestedKey === 'envelope' && (nestedValue.hasOwnProperty('attack') || nestedValue.hasOwnProperty('decay') || nestedValue.hasOwnProperty('sustain') || nestedValue.hasOwnProperty('release'))) {
+                      if (nestedKey === 'envelope' && (Object.prototype.hasOwnProperty.call(nestedValue, 'attack') || Object.prototype.hasOwnProperty.call(nestedValue, 'decay') || Object.prototype.hasOwnProperty.call(nestedValue, 'sustain') || Object.prototype.hasOwnProperty.call(nestedValue, 'release'))) {
                         console.log(`🔧 Processing envelope parameters: ${nestedPath}`)
                         // For envelope objects, handle each ADSR parameter individually
                         for (const [envParam, envValue] of Object.entries(nestedValue)) {
