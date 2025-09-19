@@ -24,10 +24,12 @@ function App() {
     getWaveformData
   } = useAudioGraph(isAudioInitialized ? currentConfig : null)
 
-  const instrumentOptions = getAvailableInstruments().map(instrument => ({
-    value: instrument.key,
-    label: instrument.name
-  }))
+  const instrumentOptions = getAvailableInstruments()
+    .map(instrument => ({
+      value: instrument.key,
+      label: instrument.name,
+      disabled: instrument.disabled || false
+    }))
 
   const handleAudioInitialization = async () => {
     try {

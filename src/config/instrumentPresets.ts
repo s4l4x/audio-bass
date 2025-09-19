@@ -445,6 +445,6 @@ export function getAvailableInstruments(): Array<{ key: keyof typeof instrumentP
     { key: 'noiseSynth', name: 'Noise Synth', description: 'Noise-based synthesizer for percussion' },
     { key: 'pluckSynth', name: 'Pluck Synth', description: 'Physical modeling plucked string' },
     { key: 'polySynth', name: 'Poly Synth', description: 'Polyphonic synthesizer for chords' },
-    { key: 'sampler', name: 'Sampler', description: 'Sample-based instrument player' }
+    { key: 'sampler', name: 'Sampler', description: 'Sample-based instrument player', disabled: true }
   ]
 }
