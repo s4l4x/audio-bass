@@ -263,7 +263,8 @@ export const pluckSynthPreset: AudioGraphConfig = {
           volume: -6,
           attackNoise: 1,
           dampening: 4000,
-          resonance: 0.7
+          resonance: 0.7,
+          release: 1
         }
       },
       output: { type: 'Output', settings: {} }

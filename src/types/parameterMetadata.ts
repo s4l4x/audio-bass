@@ -200,6 +200,34 @@ const instrumentSpecificMetadata: Record<string, Record<string, ParameterMetadat
       range: { min: 0.1, max: 10, step: 0.1 },
       description: 'Filter envelope curve shape. 1.0 = linear, >1.0 = exponential rise, <1.0 = logarithmic rise. Affects the character of the filter sweep.'
     }
+  },
+  
+  PluckSynth: {
+    attackNoise: {
+      controlType: 'slider',
+      unit: '',
+      range: { min: 0.1, max: 20, step: 0.1 },
+      description: 'Amount of noise burst at the beginning of the pluck. Higher values create more aggressive attack transients and percussive character.'
+    },
+    dampening: {
+      controlType: 'slider',
+      unit: 'Hz',
+      range: { min: 20, max: 7000, step: 50 },
+      formatDisplay: (value: number) => value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toString(),
+      description: 'Lowpass filter frequency of the comb filter. Lower values create darker, more muffled plucks. Higher values sound brighter and more metallic.'
+    },
+    resonance: {
+      controlType: 'slider',
+      unit: '',
+      range: { min: 0.0, max: 1.0, step: 0.01 },
+      description: 'Amount of resonance and sustain duration. Higher values make the pluck ring out longer with more harmonic content.'
+    },
+    release: {
+      controlType: 'slider',
+      unit: 's',
+      range: { min: 0.1, max: 5.0, step: 0.1 },
+      description: 'Release time for resonance ramp down. Controls how quickly the pluck fades out after being triggered.'
+    }
   }
 }
 
