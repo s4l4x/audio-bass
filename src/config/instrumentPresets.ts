@@ -140,8 +140,9 @@ export const fmSynthPreset: AudioGraphConfig = {
           frequency: 440,
           volume: -6,
           harmonicity: 3.0,
+          modulationIndex: 10,
           oscillator: { type: 'sine' },
-          modulation: { type: 'sine', frequency: 440, index: 10 },
+          modulation: { type: 'sine', frequency: 440 },
           envelope: {
             attack: 0.01,
             decay: 0.3,
