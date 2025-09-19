@@ -43,9 +43,9 @@ export const synthPreset: AudioGraphConfig = {
   }
 }
 
-// Graph configuration for bass kick drum  
+// Graph configuration for membrane synthesizer  
 export const bassKickPreset: AudioGraphConfig = {
-  name: 'Bass Kick',
+  name: 'Membrane Synth',
   type: 'instrument',
   graph: {
     nodes: {
@@ -435,16 +435,16 @@ export function getInstrumentPreset(instrumentType: keyof typeof instrumentPrese
 // Get all available instrument types
 export function getAvailableInstruments(): Array<{ key: keyof typeof instrumentPresets; name: string; description: string }> {
   return [
-    { key: 'synth', name: 'Basic Synth', description: 'Basic synthesizer with ADSR envelope' },
-    { key: 'membraneSynth', name: 'Bass Kick', description: 'Membrane synthesizer for bass kick drums' },
     { key: 'amSynth', name: 'AM Synth', description: 'Amplitude modulation synthesizer' },
-    { key: 'fmSynth', name: 'FM Synth', description: 'Frequency modulation synthesizer' },
+    { key: 'synth', name: 'Basic Synth', description: 'Basic synthesizer with ADSR envelope' },
     { key: 'duoSynth', name: 'Duo Synth', description: 'Two oscillator synthesizer' },
+    { key: 'fmSynth', name: 'FM Synth', description: 'Frequency modulation synthesizer' },
+    { key: 'membraneSynth', name: 'Membrane Synth', description: 'Membrane synthesizer for bass kick drums' },
+    { key: 'metalSynth', name: 'Metal Synth', description: 'Metallic percussion synthesizer' },
     { key: 'monoSynth', name: 'Mono Synth', description: 'Monophonic synthesizer with filter' },
+    { key: 'noiseSynth', name: 'Noise Synth', description: 'Noise-based synthesizer for percussion' },
     { key: 'pluckSynth', name: 'Pluck Synth', description: 'Physical modeling plucked string' },
     { key: 'polySynth', name: 'Poly Synth', description: 'Polyphonic synthesizer for chords' },
-    { key: 'metalSynth', name: 'Metal Synth', description: 'Metallic percussion synthesizer' },
-    { key: 'noiseSynth', name: 'Noise Synth', description: 'Noise-based synthesizer for percussion' },
     { key: 'sampler', name: 'Sampler', description: 'Sample-based instrument player' }
   ]
 }
