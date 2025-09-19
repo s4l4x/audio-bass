@@ -146,7 +146,7 @@ export function DebugMenu() {
           }}>
             Version {import.meta.env.PACKAGE_VERSION}
             <br />
-            {import.meta.env.GIT_COMMIT_HASH}
+            {import.meta.env.GIT_COMMIT_HASH} • {import.meta.env.GIT_COMMIT_DATE}
           </div>
         </Menu.Dropdown>
       </Menu>

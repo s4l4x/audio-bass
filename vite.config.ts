@@ -12,11 +12,21 @@ const getGitCommitHash = () => {
   }
 }
 
+// Get the latest commit date
+const getGitCommitDate = () => {
+  try {
+    return execSync('git log -1 --format=%cd --date=short').toString().trim()
+  } catch (error) {
+    return 'unknown'
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   define: {
     'import.meta.env.PACKAGE_VERSION': JSON.stringify(packageJson.version),
-    'import.meta.env.GIT_COMMIT_HASH': JSON.stringify(getGitCommitHash())
+    'import.meta.env.GIT_COMMIT_HASH': JSON.stringify(getGitCommitHash()),
+    'import.meta.env.GIT_COMMIT_DATE': JSON.stringify(getGitCommitDate())
   }
 })
