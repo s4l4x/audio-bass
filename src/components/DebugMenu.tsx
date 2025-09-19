@@ -141,9 +141,12 @@ export function DebugMenu() {
             padding: '8px 12px', 
             textAlign: 'center',
             fontSize: '12px',
-            color: 'var(--mantine-color-dimmed)'
+            color: 'var(--mantine-color-dimmed)',
+            lineHeight: '1.4'
           }}>
             Version {import.meta.env.PACKAGE_VERSION}
+            <br />
+            {import.meta.env.GIT_COMMIT_HASH}
           </div>
         </Menu.Dropdown>
       </Menu>
