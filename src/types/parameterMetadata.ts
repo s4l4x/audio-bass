@@ -19,6 +19,8 @@ export interface ParameterMetadata {
   // Transform functions for logarithmic sliders
   toSlider?: (value: number) => number
   fromSlider?: (sliderValue: number) => number
+  // Description for info tooltip
+  description?: string
 }
 
 // Metadata definitions for common Tone.js parameters
@@ -87,13 +89,15 @@ export const parameterMetadata: Record<string, ParameterMetadata> = {
   harmonicity: {
     controlType: 'slider',
     unit: '',
-    range: { min: 0.1, max: 10, step: 0.1 }
+    range: { min: 0.1, max: 10, step: 0.1 },
+    description: 'Ratio between carrier and modulator frequencies. 1.0 = same frequency (tremolo), 2.0 = octave relationship, 3.0 = perfect fifth, higher values create inharmonic/metallic sounds.'
   },
   
   modulationIndex: {
     controlType: 'slider',
     unit: '',
-    range: { min: 1, max: 100, step: 1 }
+    range: { min: 1, max: 100, step: 1 },
+    description: 'Depth of frequency modulation. 0 = no modulation, 1-5 = subtle harmonics, 10-20 = rich harmonic content, 50+ = complex bell-like/metallic timbres.'
   }
 }
 
@@ -104,7 +108,8 @@ const instrumentSpecificMetadata: Record<string, Record<string, ParameterMetadat
       controlType: 'slider',
       unit: 'Hz',
       range: { min: 0, max: 7000, step: 50 },
-      formatDisplay: (value: number) => value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toString()
+      formatDisplay: (value: number) => value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toString(),
+      description: 'Highpass filter cutoff frequency. Controls the brightness and metallic character. Higher values create brighter, more bell-like sounds.'
     }
   },
   
@@ -112,7 +117,8 @@ const instrumentSpecificMetadata: Record<string, Record<string, ParameterMetadat
     harmonicity: {
       controlType: 'slider',
       unit: '',
-      range: { min: 0.1, max: 10, step: 0.1 }
+      range: { min: 0.1, max: 10, step: 0.1 },
+      description: 'Amplitude modulation ratio. 1.0 creates tremolo, 2.0+ creates harmonic sidebands. Higher values produce more complex, bell-like timbres.'
     }
   },
   
@@ -120,12 +126,14 @@ const instrumentSpecificMetadata: Record<string, Record<string, ParameterMetadat
     harmonicity: {
       controlType: 'slider',
       unit: '',
-      range: { min: 0.1, max: 10, step: 0.1 }
+      range: { min: 0.1, max: 10, step: 0.1 },
+      description: 'FM carrier-to-modulator ratio. 1.0 = same frequency, integer ratios create harmonic spectra, non-integer ratios create inharmonic timbres.'
     },
     modulationIndex: {
       controlType: 'slider',
       unit: '',
-      range: { min: 0, max: 100, step: 1 }
+      range: { min: 0, max: 100, step: 1 },
+      description: 'FM synthesis depth. Controls spectral complexity. Low values (1-10) add harmonics, high values (20+) create bell-like, metallic sounds.'
     }
   }
 }

@@ -228,6 +228,7 @@ export function InstrumentControls({
               formatDisplay={metadata.formatDisplay}
               min={metadata.scale === 'logarithmic' ? 20 : metadata.range?.min}
               max={metadata.scale === 'logarithmic' ? 20000 : metadata.range?.max}
+              description={metadata.description}
             />
             <Slider
               value={sliderValue}
