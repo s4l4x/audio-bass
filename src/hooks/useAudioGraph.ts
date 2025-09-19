@@ -295,9 +295,24 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
     }
   }, [isGraphInitialized, nodes, waveformData, generateWaveformData])
 
-  // Generate waveform data when settings change (separate from initialization)
+  // Generate waveform data when config structure changes (like switching instruments)
+  const configVersionRef = useRef<string>('')
   useEffect(() => {
-    if (graphStateRef.current.isInitialized && waveformData) {
+    if (!config) return
+    
+    // Only regenerate if config structure actually changed (node types, not just settings)
+    const configStructure = JSON.stringify(
+      Object.fromEntries(
+        Object.entries(config.graph.nodes).map(([id, node]) => [id, { type: node.type, trigger: node.trigger }])
+      )
+    )
+    
+    if (graphStateRef.current.isInitialized && 
+        configStructure !== configVersionRef.current) {
+      
+      console.log('🎨 Config structure changed, regenerating waveform...')
+      configVersionRef.current = configStructure
+      
       const generateWaveform = async () => {
         const newWaveformData = await generateWaveformData()
         setWaveformData(newWaveformData)
@@ -306,8 +321,11 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
       // Small delay to ensure any settings updates are complete
       const timer = setTimeout(generateWaveform, 100)
       return () => clearTimeout(timer)
+    } else if (configVersionRef.current === '') {
+      // Store initial structure
+      configVersionRef.current = configStructure
     }
-  }, [config, generateWaveformData, waveformData])
+  }, [config, generateWaveformData])
 
   // Update graph configuration
   const updateConfig = useCallback((newConfig: Partial<AudioGraphConfig>) => {
@@ -321,10 +339,14 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
     // Apply any modulation that might affect this node
     applyModulation(nodeId)
     
-    // Regenerate waveform data when settings change
-    generateWaveformData().then(newWaveformData => {
+    // Regenerate waveform when node settings change
+    // This is needed because parameter changes don't change the config structure
+    try {
+      const newWaveformData = await generateWaveformData()
       setWaveformData(newWaveformData)
-    })
+    } catch (error) {
+      console.error('❌ Error regenerating waveform after settings update:', error)
+    }
   }, [updateNodeSettings, applyModulation, generateWaveformData])
 
   // Trigger the graph (start playback)
@@ -445,12 +467,6 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
           console.log('🎹 Triggering sustained note (triggerAttack):', noteToPlay)
           toneNode.triggerAttack(noteToPlay)
           setIsPlaying(true)
-          
-          // Regenerate waveform data after triggering
-          setTimeout(async () => {
-            const newWaveformData = await generateWaveformData()
-            setWaveformData(newWaveformData)
-          }, 100)
         }
       } else {
         console.warn('⚠️ Node not triggerable:', nodeId)
