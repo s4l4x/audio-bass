@@ -433,7 +433,7 @@ export function getInstrumentPreset(instrumentType: keyof typeof instrumentPrese
 }
 
 // Get all available instrument types
-export function getAvailableInstruments(): Array<{ key: keyof typeof instrumentPresets; name: string; description: string }> {
+export function getAvailableInstruments(): Array<{ key: keyof typeof instrumentPresets; name: string; description: string; disabled?: boolean }> {
   return [
     { key: 'amSynth', name: 'AM Synth', description: 'Amplitude modulation synthesizer' },
     { key: 'synth', name: 'Basic Synth', description: 'Basic synthesizer with ADSR envelope' },
