@@ -30,6 +30,12 @@ const createToneInstance = (type: AudioNodeType, settings: Record<string, any> =
         return new Tone.PluckSynth(settings)
       case 'PolySynth':
         return new Tone.PolySynth(settings)
+      case 'MetalSynth':
+        return new Tone.MetalSynth(settings)
+      case 'NoiseSynth':
+        return new Tone.NoiseSynth(settings)
+      case 'Sampler':
+        return new Tone.Sampler(settings)
       
       // Oscillators and LFOs
       case 'Oscillator':

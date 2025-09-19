@@ -4,14 +4,13 @@ import { useAudioGraph } from './hooks/useAudioGraph'
 import { InstrumentControls } from './components/InstrumentControls'
 import { DebugMenu } from './components/DebugMenu'
 import { InitializationScreen } from './components/InitializationScreen'
-import { getInstrumentPreset } from './config/instrumentPresets'
+import { getInstrumentPreset, getAvailableInstruments, instrumentPresets } from './config/instrumentPresets'
 import { loadTone } from './utils/toneLoader'
 import type { SynthSettings, MembraneSynthSettings } from './types/instruments'
-import type { LegacyInstrumentType } from './types/audioGraph'
 
 function App() {
   const [isAudioInitialized, setIsAudioInitialized] = useState(false)
-  const [currentInstrumentType, setCurrentInstrumentType] = useState<LegacyInstrumentType>('membraneSynth')
+  const [currentInstrumentType, setCurrentInstrumentType] = useState<keyof typeof instrumentPresets>('membraneSynth')
   const [currentConfig, setCurrentConfig] = useState(() => getInstrumentPreset('membraneSynth'))
   
   // Only initialize audio graph after audio is ready
@@ -25,10 +24,10 @@ function App() {
     getWaveformData
   } = useAudioGraph(isAudioInitialized ? currentConfig : null)
 
-  const instrumentOptions = [
-    { value: 'membraneSynth', label: 'Bass Kick' },
-    { value: 'synth', label: 'Synth' }
-  ]
+  const instrumentOptions = getAvailableInstruments().map(instrument => ({
+    value: instrument.key,
+    label: instrument.name
+  }))
 
   const handleAudioInitialization = async () => {
     try {
@@ -49,7 +48,7 @@ function App() {
     }
   }
 
-  const changeInstrumentType = (type: LegacyInstrumentType) => {
+  const changeInstrumentType = (type: keyof typeof instrumentPresets) => {
     const newConfig = getInstrumentPreset(type)
     setCurrentInstrumentType(type)
     setCurrentConfig(newConfig)
@@ -90,41 +89,24 @@ function App() {
     const nodeSettings = nodeInstance?.settings || triggerNodeConfig[1].settings || {}
 
     // Ensure we have proper default settings for each instrument type
-    const getDefaultSettingsForType = (type: LegacyInstrumentType, settings: Record<string, unknown>) => {
-      if (type === 'synth') {
+    const getDefaultSettingsForType = (type: keyof typeof instrumentPresets, settings: Record<string, unknown>) => {
+      // Use the preset configuration as default and merge with actual settings
+      const presetConfig = getInstrumentPreset(type)
+      const triggerNode = Object.entries(presetConfig.graph.nodes)
+        .find(([, nodeDef]) => nodeDef.trigger)
+      
+      if (triggerNode) {
         return {
-          frequency: 440,
-          volume: -6,
-          oscillatorType: 'sine',
-          envelope: {
-            attack: 0.01,
-            decay: 0.3,
-            sustain: 0.3,
-            release: 1.0,
-            attackCurve: 'exponential',
-            decayCurve: 'exponential', 
-            releaseCurve: 'exponential'
-          },
+          ...triggerNode[1].settings,
           ...settings
         }
-      } else {
-        return {
-          volume: -6,
-          pitchDecay: 0.05,
-          octaves: 10,
-          oscillatorType: 'sine',
-          envelope: {
-            attack: 0.001,
-            decay: 0.4,
-            sustain: 0.01,
-            release: 1.4,
-            sustainDuration: 0.1,
-            attackCurve: 'exponential',
-            decayCurve: 'exponential',
-            releaseCurve: 'exponential'
-          },
-          ...settings
-        }
+      }
+      
+      // Fallback defaults
+      return {
+        frequency: 440,
+        volume: -6,
+        ...settings
       }
     }
 
@@ -136,9 +118,9 @@ function App() {
         settings={safeSettings}
         isPlaying={isPlaying}
         onSettingsChange={updateSettings}
-        onTrigger={currentInstrumentType === 'membraneSynth' ? () => triggerGraph() : undefined}
-        onPlay={currentInstrumentType === 'synth' ? () => triggerGraph() : undefined}
-        onStop={currentInstrumentType === 'synth' ? () => releaseGraph() : undefined}
+        onTrigger={config?.graph.trigger === 'momentary' ? () => triggerGraph() : undefined}
+        onPlay={config?.graph.trigger === 'sustained' ? () => triggerGraph() : undefined}
+        onStop={config?.graph.trigger === 'sustained' ? () => releaseGraph() : undefined}
         getWaveformData={getWaveformData}
       />
     )
@@ -180,7 +162,7 @@ function App() {
                 <Select
                   label="Choose Instrument"
                   value={currentInstrumentType}
-                  onChange={(value) => changeInstrumentType(value as LegacyInstrumentType)}
+                  onChange={(value) => changeInstrumentType(value as keyof typeof instrumentPresets)}
                   data={instrumentOptions}
                   mb="xl"
                   style={{ width: '100%' }}
