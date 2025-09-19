@@ -306,13 +306,13 @@ export const noiseSynthPreset: AudioGraphConfig = {
         type: 'NoiseSynth',
         trigger: true,
         settings: {
-          volume: -6,
+          volume: -3,
           noise: { type: 'white' },
           envelope: {
             attack: 0.005,
-            decay: 0.1,
+            decay: 0.3,
             sustain: 0.0,
-            release: 0.1
+            release: 0.3
           }
         }
       },

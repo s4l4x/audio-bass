@@ -460,7 +460,6 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
         if (config.graph.trigger === 'momentary') {
           // For bass kick style - use triggerAttack and delayed triggerRelease
           // This lets the instrument's envelope handle the amplitude curve naturally
-          const noteToPlay = note || 'C2'
           
           // Calculate when to trigger release (after attack + decay + sustainDuration)
           const envelope = node.settings.envelope || {}
@@ -472,11 +471,19 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
           const releaseStartTime = attackTime + decayTime + sustainDuration
           const totalDuration = releaseStartTime + releaseTime
           
-          console.log('🥁 Triggering bass kick attack:', noteToPlay)
-          console.log('🥁 Release timing - start at:', releaseStartTime + 's', 'total duration:', totalDuration + 's')
+          // Handle different instrument types for triggering
+          if (node.type === 'NoiseSynth' || node.type === 'MetalSynth') {
+            // NoiseSynth and MetalSynth don't need a note parameter
+            console.log(`🔊 Triggering ${node.type} attack (no note)`)
+            toneNode.triggerAttack()
+          } else {
+            // Other instruments need a note
+            const noteToPlay = note || 'C2'
+            console.log('🥁 Triggering attack:', noteToPlay)
+            toneNode.triggerAttack(noteToPlay)
+          }
           
-          // Start the attack
-          toneNode.triggerAttack(noteToPlay)
+          console.log('🥁 Release timing - start at:', releaseStartTime + 's', 'total duration:', totalDuration + 's')
           
           // Schedule the release after the sustain duration
           setTimeout(() => {
@@ -496,11 +503,18 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
             toneNode.triggerRelease()
           }
           
-          // Use the current frequency setting from the node
-          const currentFrequency = node.settings.frequency || 440
-          const noteToPlay = note || currentFrequency
-          console.log('🎹 Triggering sustained note (triggerAttack):', noteToPlay)
-          toneNode.triggerAttack(noteToPlay)
+          // Handle different instrument types for sustained triggering
+          if (node.type === 'NoiseSynth' || node.type === 'MetalSynth') {
+            // NoiseSynth and MetalSynth don't need a note parameter
+            console.log(`🔊 Triggering sustained ${node.type} attack (no note)`)
+            toneNode.triggerAttack()
+          } else {
+            // Other instruments need a note
+            const currentFrequency = node.settings.frequency || 440
+            const noteToPlay = note || currentFrequency
+            console.log('🎹 Triggering sustained note (triggerAttack):', noteToPlay)
+            toneNode.triggerAttack(noteToPlay)
+          }
           setIsPlaying(true)
         }
       } else {
