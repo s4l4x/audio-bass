@@ -1,8 +1,8 @@
 import type { AudioGraphConfig } from '../types/audioGraph'
 
-// Graph configuration for basic synthesizer
+// Graph configuration for synthesizer
 export const synthPreset: AudioGraphConfig = {
-  name: 'Basic Synth',
+  name: 'Synth',
   type: 'instrument',
   graph: {
     nodes: {
@@ -10,7 +10,7 @@ export const synthPreset: AudioGraphConfig = {
         type: 'Synth',
         trigger: true,
         settings: {
-          // Default settings for basic synth
+          // Default settings for synthesizer
           frequency: 440,
           volume: -6,
           oscillator: { type: 'sine' },
