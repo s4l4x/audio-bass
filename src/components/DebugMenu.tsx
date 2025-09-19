@@ -135,6 +135,16 @@ export function DebugMenu() {
           >
             {isTestPlaying ? 'Testing...' : 'Test Audio'}
           </Menu.Item>
+          
+          <Menu.Divider />
+          <div style={{ 
+            padding: '8px 12px', 
+            textAlign: 'center',
+            fontSize: '12px',
+            color: 'var(--mantine-color-dimmed)'
+          }}>
+            Version {import.meta.env.PACKAGE_VERSION}
+          </div>
         </Menu.Dropdown>
       </Menu>
 
