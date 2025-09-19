@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { useImmer } from 'use-immer'
 import { getToneModule } from '../utils/toneLoader'
 import { useAudioNodes } from './useAudioNodes'
 import { useGraphConnections } from './useGraphConnections'
@@ -6,7 +7,7 @@ import { useModulationMatrix } from './useModulationMatrix'
 import type { AudioGraphConfig, AudioGraphState } from '../types/audioGraph'
 
 export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
-  const [config, setConfig] = useState<AudioGraphConfig | null>(initialConfig)
+  const [config, updateConfig] = useImmer<AudioGraphConfig | null>(initialConfig)
   const [isPlaying, setIsPlaying] = useState(false)
   const [waveformData, setWaveformData] = useState<Float32Array | null>(null)
   const [isGraphInitialized, setIsGraphInitialized] = useState(false)
@@ -18,6 +19,10 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
   
   // Flag to prevent effect loops
   const initializingRef = useRef(false)
+  
+  // Refs to store current state for waveform generation
+  const currentConfigRef = useRef<AudioGraphConfig | null>(config)
+  const currentNodesRef = useRef<Map<string, any>>(new Map())
 
   // Use the specialized hooks for managing different aspects (always call hooks)
   const { 
@@ -39,23 +44,36 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
     applyModulation 
   } = useModulationMatrix(nodes)
 
+  // Update refs when state changes
+  useEffect(() => {
+    currentConfigRef.current = config
+  }, [config])
+  
+  useEffect(() => {
+    currentNodesRef.current = nodes
+  }, [nodes])
+
   // Generate waveform data for visualization using offline rendering
   const generateWaveformData = useCallback(async (): Promise<Float32Array | null> => {
-    if (!config) return null
+    const currentConfig = currentConfigRef.current
+    const currentNodes = currentNodesRef.current
+    
+    if (!currentConfig) return null
     
     try {
       // Get the trigger node settings
-      const triggerNodeConfig = Object.entries(config.graph.nodes)
+      const triggerNodeConfig = Object.entries(currentConfig.graph.nodes)
         .find(([, nodeDef]) => nodeDef.trigger)
       
       if (!triggerNodeConfig) return null
       
       const [nodeId, nodeDefinition] = triggerNodeConfig
       
-      // Get current node instance settings if available, otherwise use config
-      const nodeInstance = nodes.get(nodeId)
+      // Get current node instance settings (these are always up-to-date)
+      const nodeInstance = currentNodes.get(nodeId)
       const configSettings = nodeDefinition.settings || {}
       const instanceSettings = nodeInstance?.settings || {}
+      // Prioritize instance settings since they reflect live parameter changes
       const settings = { ...configSettings, ...instanceSettings }
       
       console.log('🎨 Generating waveform for:', nodeDefinition.type, 'with settings:', settings)
@@ -161,7 +179,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
       console.error('❌ Error generating waveform:', error)
       return null
     }
-  }, [config, nodes])
+  }, [])
 
   // Initialize graph when config changes
   const initializeGraph = useCallback(async (configToUse?: AudioGraphConfig) => {
@@ -241,7 +259,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
       }
       
       // Update config and reset state
-      setConfig(initialConfig)
+      updateConfig(() => initialConfig)
       graphStateRef.current.isInitialized = false
       setIsGraphInitialized(false)
       setWaveformData(null)
@@ -328,9 +346,13 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
   }, [config, generateWaveformData])
 
   // Update graph configuration
-  const updateConfig = useCallback((newConfig: Partial<AudioGraphConfig>) => {
-    setConfig(prev => prev ? ({ ...prev, ...newConfig }) : null)
-  }, [])
+  const updateGraphConfig = useCallback((newConfig: Partial<AudioGraphConfig>) => {
+    updateConfig(draft => {
+      if (draft) {
+        Object.assign(draft, newConfig)
+      }
+    })
+  }, [updateConfig])
 
   // Update node settings within the graph
   const updateNodeInGraph = useCallback(async (nodeId: string, settings: Record<string, unknown>) => {
@@ -339,15 +361,28 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
     // Apply any modulation that might affect this node
     applyModulation(nodeId)
     
+    // Update config to keep it in sync with live state
+    updateConfig(draft => {
+      if (draft?.graph.nodes[nodeId]) {
+        // Ensure settings object exists
+        if (!draft.graph.nodes[nodeId].settings) {
+          draft.graph.nodes[nodeId].settings = {}
+        }
+        
+        Object.assign(draft.graph.nodes[nodeId].settings, settings)
+      }
+    })
+    
     // Regenerate waveform when node settings change
     // This is needed because parameter changes don't change the config structure
+    // Regenerate waveform with current live data (no setTimeout needed)
     try {
       const newWaveformData = await generateWaveformData()
       setWaveformData(newWaveformData)
     } catch (error) {
       console.error('❌ Error regenerating waveform after settings update:', error)
     }
-  }, [updateNodeSettings, applyModulation, generateWaveformData])
+  }, [updateNodeSettings, applyModulation, updateConfig, generateWaveformData])
 
   // Trigger the graph (start playback)
   const triggerGraph = useCallback(async (note?: string | number) => {
@@ -558,7 +593,7 @@ export function useAudioGraph(initialConfig: AudioGraphConfig | null) {
     nodes: initialConfig ? nodes : new Map(),
     connections: initialConfig ? connections : [],
     modulationRoutes: initialConfig ? modulationRoutes : [],
-    updateConfig: initialConfig ? updateConfig : () => {},
+    updateConfig: initialConfig ? updateGraphConfig : () => {},
     updateNodeInGraph: initialConfig ? updateNodeInGraph : async () => {},
     initializeGraph: initialConfig ? initializeGraph : async () => {},
     triggerGraph: initialConfig ? triggerGraph : async () => {},

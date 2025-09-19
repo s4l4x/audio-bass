@@ -1,4 +1,4 @@
-import { Modal, ScrollArea, Code, Title, Box, Group, ActionIcon } from '@mantine/core'
+import { Modal, ScrollArea, Code, Box, Group, ActionIcon } from '@mantine/core'
 import { useClipboard } from '@mantine/hooks'
 import { IconCopy, IconCheck, IconX } from '@tabler/icons-react'
 import type { AudioGraphConfig } from '../types/audioGraph'
