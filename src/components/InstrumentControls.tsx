@@ -331,8 +331,8 @@ export function InstrumentControls({
       {/* DuoSynth-specific controls */}
       {instrumentType === 'DuoSynth' && renderDuoSynthControls()}
 
-      {/* Main envelope controls - only for non-DuoSynth instruments */}
-      {instrumentType !== 'DuoSynth' && (
+      {/* Main envelope controls - only for non-DuoSynth and non-PluckSynth instruments */}
+      {instrumentType !== 'DuoSynth' && instrumentType !== 'PluckSynth' && (
         <Stack gap="xs">
           <ADSRControls
             instrumentType={triggerType === 'sustained' ? 'sustained' : 'percussive'}
