@@ -1,4 +1,4 @@
-import { Button, Text, type MantineSize } from '@mantine/core'
+import { Button, type MantineSize, Box, useMantineColorScheme } from '@mantine/core'
 import { IconPlayerPlayFilled } from '@tabler/icons-react'
 import { useState, useEffect } from 'react'
 
@@ -28,6 +28,10 @@ export function PlayButton({
   
   // Detect if device supports touch
   const [isTouchDevice, setIsTouchDevice] = useState(false)
+  const { colorScheme } = useMantineColorScheme()
+  
+  // Create unique ID for this component's CSS
+  const shimmerAnimationId = 'shimmer-playbutton-' + Math.random().toString(36).substr(2, 9)
   
   useEffect(() => {
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0)
@@ -43,45 +47,58 @@ export function PlayButton({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: "9999px",
-    padding: 0
+    padding: 0,
+    position: 'relative' as const,
+    overflow: 'hidden'
   }
 
-  // Pulse type (bass kick) - single trigger
-  if (triggerType === 'pulse') {
-    const handlePulseTrigger = async () => {
-      console.log('🥁 Pulse trigger - one-shot')
+  // Shimmer effect component
+  const ShimmerEffect = () => (
+    <>
+      {/* CSS Animation */}
+      <style>{`
+      @keyframes ${shimmerAnimationId} {
+        0% { 
+        left: -400%; 
+        }
+        100% { 
+        left: 400%; 
+        }
+      }
+      `}</style>
       
-      // Audio context should already be initialized
-      
-      onTrigger()
-    }
+      {/* Moving gradient overlay */}
+      <Box
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: '-400%',
+        width: '800%',
+        height: '100%',
+        background: `linear-gradient(45deg, 
+        transparent 0%, 
+        transparent 10%, 
+        ${colorScheme === 'dark' ? 'var(--mantine-color-dark-0)' : 'white'} 10.5%, 
+        ${colorScheme === 'dark' ? 'var(--mantine-color-dark-0)' : 'white'} 13%, 
+        transparent 18%, 
+        transparent 100%
+        )`,
+        opacity: 0.2,
+        animation: `${shimmerAnimationId} 2.5s infinite linear`,
+        pointerEvents: 'none'
+      }}
+      />
+    </>
+  )
 
-    return (
-      <Button
-        w={width}
-        h={height}
-        // Use onClick for desktop, onTouchStart for mobile - never both
-        onClick={isTouchDevice ? undefined : handlePulseTrigger}
-        onTouchStart={isTouchDevice ? handlePulseTrigger : undefined}
-        onContextMenu={(e) => {
-          e.preventDefault() // Prevent context menu
-        }}
-        variant={isPlaying ? "filled" : "outline"}
-        color={color}
-        size={size}
-        style={baseStyle}
-      >
-        <IconPlayerPlayFilled size={12} />
-      </Button>
-    )
+  // Handler functions
+  const handlePulseTrigger = async () => {
+    console.log('🥁 Pulse trigger - one-shot')
+    onTrigger()
   }
 
-  // Sustained type (synth) - press/hold/release
   const handleSustainedStart = async () => {
     console.log('🎹 Sustained start - starting note')
-    
-    // Audio context should already be initialized
-    
     onPlay?.()
   }
 
@@ -90,26 +107,38 @@ export function PlayButton({
     onStop?.()
   }
 
+  // Event handlers based on trigger type
+  const eventHandlers = triggerType === 'pulse' 
+    ? {
+        // Pulse: single trigger on click/touch
+        onClick: isTouchDevice ? undefined : handlePulseTrigger,
+        onTouchStart: isTouchDevice ? handlePulseTrigger : undefined,
+      }
+    : {
+        // Sustained: press/hold/release
+        onMouseDown: isTouchDevice ? undefined : handleSustainedStart,
+        onMouseUp: isTouchDevice ? undefined : handleSustainedStop,
+        onMouseLeave: isTouchDevice ? undefined : handleSustainedStop,
+        onTouchStart: isTouchDevice ? handleSustainedStart : undefined,
+        onTouchEnd: isTouchDevice ? handleSustainedStop : undefined,
+        onTouchCancel: isTouchDevice ? handleSustainedStop : undefined,
+      }
+
   return (
     <Button
       w={width}
       h={height}
-      // Desktop: use mouse events, Mobile: use touch events - never both
-      onMouseDown={isTouchDevice ? undefined : handleSustainedStart}
-      onMouseUp={isTouchDevice ? undefined : handleSustainedStop}
-      onMouseLeave={isTouchDevice ? undefined : handleSustainedStop}
-      onTouchStart={isTouchDevice ? handleSustainedStart : undefined}
-      onTouchEnd={isTouchDevice ? handleSustainedStop : undefined}
-      onTouchCancel={isTouchDevice ? handleSustainedStop : undefined}
+      {...eventHandlers}
       onContextMenu={(e) => {
-        e.preventDefault() // Prevent context menu entirely
+        e.preventDefault() // Prevent context menu
       }}
-      variant={isPlaying ? "filled" : "outline"}
+      variant={isPlaying ? "outline" : "filled"}
       color={color}
       size={size}
       style={baseStyle}
     >
-      <IconPlayerPlayFilled size={12} />
+      <ShimmerEffect />
+      <IconPlayerPlayFilled size={14} style={{ position: 'relative', zIndex: 1 }} />
     </Button>
   )
 }
